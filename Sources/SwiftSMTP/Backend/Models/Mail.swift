@@ -97,8 +97,9 @@ public extension Mail {
     /// let sender = Mail.Contact(email: "noreply@service.com")
     /// ```
     struct Contact {
-        public let name: String?
-        public let email: Address
+        
+        private let name: String?
+        private let email: Address
 
         public init(_ name: String? = nil , email: Address) {
             self.name = name
