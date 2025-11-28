@@ -12,7 +12,7 @@ let package = Package(
         .library(
             name: "SwiftSMTP",
             targets: ["SwiftSMTP"]
-        ),
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio", from: "2.0.0"),
@@ -26,11 +26,11 @@ let package = Package(
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "NIOExtras", package: "swift-nio-extras")
-            ],
+            ]
         ),
         .testTarget(
             name: "SwiftSMTPTests",
             dependencies: ["SwiftSMTP"]
-        ),
+        )
     ]
 )
