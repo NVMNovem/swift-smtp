@@ -27,7 +27,7 @@ public final class Client {
 
 public extension Client {
     
-    func send(_ mails: [Mail]) async throws {
+    func send(_ mails: Mail...) async throws {
         try await transport.connect()
         
         try await sendCommand("EHLO \(heloName)")
