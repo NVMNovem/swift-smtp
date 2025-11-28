@@ -52,16 +52,32 @@ private extension Client {
     
     func send(_ mail: Mail) async throws {
         try await sendCommand("MAIL FROM:\(mail.sender.formatted())")
-        try await sendCommand("RCPT TO:\(mail.receiver.formatted())")
+        
+        var failedRecipientErrors: [Swift.Error] = []
+        for recipient in mail.receivers.all {
+            do {
+                try await sendCommand("RCPT TO:\(recipient.formatted())")
+            } catch {
+                failedRecipientErrors.append(error)
+            }
+        }
+        if !failedRecipientErrors.isEmpty {
+            throw Error.invalidResponse("All RCPT TO commands were rejected by server")
+        }
+        
         try await sendCommand("DATA")
         try await sendCommand(mail.formatted())
         try await sendCommand(".")
     }
     
-    func sendCommand(_ command: String) async throws {
+    @discardableResult
+    func sendCommand(_ command: String) async throws -> Bool {
         await transport.sendLine(command)
         let response = try await transport.readLine()
+        
         guard response.hasPrefix("2") || response.hasPrefix("3")
         else { throw Error.invalidResponse(response) }
+        
+        return true
     }
 }

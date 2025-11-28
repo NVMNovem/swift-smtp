@@ -9,9 +9,9 @@ import Foundation
 
 /// Represents an email message, including sender, recipient, subject, and body.
 ///
-/// The `Mail` struct provides a simple model for constructing an email message, 
+/// The `Mail` struct provides a simple model for constructing an email message,
 /// including sender and receiver information, email subject, and the body text.
-/// Use one of the initializers to create a new `Mail` either by providing 
+/// Use one of the initializers to create a new `Mail` either by providing
 /// contact objects or just email address strings for sender and recipient.
 ///
 /// Example usage:
@@ -37,7 +37,7 @@ public struct Mail {
     /// A typealias representing an email address as a `String`.
     ///
     /// `Address` is used throughout the `Mail` structure to clearly indicate locations
-    /// where an email address is expected or required. This improves readability and 
+    /// where an email address is expected or required. This improves readability and
     /// helps distinguish email address values from other `String` types.
     ///
     /// Example:
@@ -48,29 +48,43 @@ public struct Mail {
     public typealias Address = String
     
     public let sender: Contact
-    public let receiver: Contact
+    public let receivers: Receivers
     public let subject: String
     public let body: String
+    
+    public enum Receivers: Sendable {
+        case single(Contact)
+        case multiple([Contact])
+        
+        var all: [Contact] {
+            switch self {
+            case .single(let contact): [contact]
+            case .multiple(let contacts): contacts
+            }
+        }
+    }
 
-    public init(from senderAdress: Address, to receiverAddress: Address, subject: String, body: () -> String) {
-        self.sender = Contact(email: senderAdress)
-        self.receiver = Contact(email: receiverAddress)
+    public init(from sender: Contact, to receivers: [Contact], subject: String, body: () -> String) {
+        self.sender = sender
+        self.receivers = .multiple(receivers)
         self.subject = subject
         self.body = body()
     }
 
-    public init(from sender: Contact, to receiver: Contact, subject: String, body: () -> String) {
-        self.sender = sender
-        self.receiver = receiver
+    public init(from senderAddress: Address, to receiverAddresses: [Address], subject: String, body: () -> String) {
+        self.sender = Contact(email: senderAddress)
+        self.receivers = .multiple(receiverAddresses.map { Contact(email: $0) })
         self.subject = subject
         self.body = body()
     }
 
     /// Formatted RFC-like simple representation
     internal func formatted() -> String {
-        """
+        let toHeader = receivers.all.map { $0.formatted() }.joined(separator: ", ")
+
+        return """
         From: \(sender.formatted())
-        To: \(receiver.formatted())
+        To: \(toHeader)
         Subject: \(subject)
 
         \(body)
@@ -82,11 +96,30 @@ extension Mail: Sendable {}
 
 public extension Mail {
     
+    init(from sender: Contact, to receiver: Contact, subject: String, body: () -> String) {
+        self.init(from: sender, to: [receiver], subject: subject, body: body)
+    }
+    
+    init(from senderAddress: Address, to receiverAddress: Address, subject: String, body: () -> String) {
+        self.init(from: senderAddress, to: [receiverAddress], subject: subject, body: body)
+    }
+
+    init(from sender: Contact, to receivers: Contact..., subject: String, body: () -> String) {
+        self.init(from: sender, to: Array(receivers), subject: subject, body: body)
+    }
+
+    init(from senderAddress: Address, to receiverAddresses: Address..., subject: String, body: () -> String) {
+        self.init(from: senderAddress, to: Array(receiverAddresses), subject: subject, body: body)
+    }
+}
+
+public extension Mail {
+    
     /// Represents an email contact, containing an optional name and a required email address.
-    /// 
-    /// Use `Contact` to identify senders or recipients in a `Mail` object. 
+    ///
+    /// Use `Contact` to identify senders or recipients in a `Mail` object.
     /// The `name` can be `nil` or empty if only the email should be used.
-    /// 
+    ///
     /// - Parameters:
     ///   - name: The display name for this contact (optional).
     ///   - email: The email address associated with this contact (required).
@@ -124,5 +157,3 @@ public extension Mail {
 extension Mail.Contact: Sendable {}
 
 extension Mail.Contact: Equatable, Hashable {}
-    
-
