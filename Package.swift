@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SwiftSMTP",
+    name: "swift-smtp",
     platforms: [
         .iOS(.v15), .macOS(.v13)
     ],
