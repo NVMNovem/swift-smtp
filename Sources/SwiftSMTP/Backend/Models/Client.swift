@@ -51,8 +51,8 @@ public extension Client {
 private extension Client {
     
     func send(_ mail: Mail) async throws {
-        try await sendCommand("MAIL FROM:<\(mail.sender.formatted())>")
-        try await sendCommand("RCPT TO:<\(mail.receiver.formatted())>")
+        try await sendCommand("MAIL FROM:\(mail.sender.formatted())")
+        try await sendCommand("RCPT TO:\(mail.receiver.formatted())")
         try await sendCommand("DATA")
         try await sendCommand(mail.formatted())
         try await sendCommand(".")

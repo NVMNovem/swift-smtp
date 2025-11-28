@@ -109,9 +109,13 @@ public extension Mail {
         /// Formatted RFC-like simple representation
         internal func formatted() -> String {
             if let name, !name.isEmpty {
-                return "\(name) <\(email)>"
+                if name.contains(where: { $0 == "," || $0 == "<" || $0 == ">" }) {
+                    return "\"\(name)\" <\(email)>"
+                } else {
+                    return "\(name) <\(email)>"
+                }
             } else {
-                return email
+                return "<\(email)>"
             }
         }
     }
