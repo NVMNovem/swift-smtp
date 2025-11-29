@@ -1,7 +1,7 @@
 <picture>
-  <source srcset="https://github.com/user-attachments/assets/88f04eb0-c438-4d0e-831b-dd97d90132e4" media="(prefers-color-scheme: light)"/>
-  <source srcset="https://github.com/user-attachments/assets/78d5a94f-9b27-4994-8136-817187091bc3"  media="(prefers-color-scheme: dark)"/>
-  <img src="https://github.com/user-attachments/assets/88f04eb0-c438-4d0e-831b-dd97d90132e4" alt="SwiftSMTP"/>
+  <source srcset="https://github.com/user-attachments/assets/72ef2808-910d-430b-8542-48330e7e4d90" media="(prefers-color-scheme: light)"/>
+  <source srcset="https://github.com/user-attachments/assets/bb9e540a-4503-4be6-a245-492838d858b7"  media="(prefers-color-scheme: dark)"/>
+  <img src="https://github.com/user-attachments/assets/72ef2808-910d-430b-8542-48330e7e4d90" alt="SwiftSMTP"/>
 </picture>
 
 SwiftSMTP is a lightweight Swift package for sending email using SMTP. It provides a simple API to construct messages and send them via an SMTP server using SwiftNIO for networking and NIOSSL for TLS support.
