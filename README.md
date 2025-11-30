@@ -42,7 +42,7 @@ Add `swift-smtp` as a dependency to your `Package.swift`:
 ```swift
 // Package.swift (snippet)
 dependencies: [
-    .package(url: "https://github.com/your-org/swift-smtp", from: "1.0.0")
+    .package(url: "https://github.com/NVMNovem/swift-smtp", from: "1.0.0")
 ]
 
 targets: [
