@@ -57,8 +57,6 @@ targets: [
 
 Then run `swift build` in your project or open the package in Xcode.
 
-> Note: Replace the package URL and version with the correct upstream repository and tag when publishing.
-
 ## Quick Start
 
 Below is a minimal example of how to construct and send a message. The exact API names may vary; consult the sources under `Sources/SwiftSMTP` for the concrete types and initializer parameters.
