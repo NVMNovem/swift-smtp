@@ -68,12 +68,9 @@ import SwiftSMTP
 
 let client = SMTPClient(host: "smtp.example.com", port: 587, username: "user", password: "password")
 
-let mail = Mail(
-    from: "sender@example.com",
-    to: "recipient@example.com",
-    subject: "Hello from SwiftSMTP",
-    body: "This is a test message sent from SwiftSMTP."
-)
+let mail = Mail(from: "sender@example.com", to: "recipient@example.com", subject: "Hello from SwiftSMTP") {
+    "This is a test message sent from SwiftSMTP."
+}
 
 Task {
     do {
