@@ -38,6 +38,8 @@ public struct Mail {
     public let receivers: Receivers
     public let subject: String
     public let body: String
+    
+    public private(set) var priority: Priority? = nil
 
     public init(from sender: Contact, to receivers: [Contact], subject: String, body: () -> String) {
         self.sender = sender
@@ -51,19 +53,6 @@ public struct Mail {
         self.receivers = .multiple(receiverAddresses.map { Contact(email: $0) })
         self.subject = subject
         self.body = body()
-    }
-
-    /// Formatted RFC-like simple representation
-    internal func headers() -> String {
-        let toHeader = receivers.all.map { $0.formatted() }.joined(separator: ", ")
-
-        return """
-        From: \(sender.formatted())
-        To: \(toHeader)
-        Subject: \(subject)
-
-        \(body)
-        """
     }
 }
 
@@ -85,5 +74,51 @@ public extension Mail {
 
     init(from senderAddress: Address, to receiverAddresses: Address..., subject: String, body: () -> String) {
         self.init(from: senderAddress, to: Array(receiverAddresses), subject: subject, body: body)
+    }
+}
+
+public extension Mail {
+    
+    mutating func setPriority(_ priority: Priority) {
+        self.priority = priority
+    }
+}
+
+// MARK: - Internal Formatting
+internal extension Mail {
+    
+    /// Formatted RFC-like simple representation
+    func formatted() -> String {
+        """
+        \(headers)
+        
+        \(body)
+        """
+    }
+    
+    var headers: String {
+        var headers = """
+        From: \(sender.formatted())
+        To: \(receivers.formatted())
+        Subject: \(subject)
+        """
+        
+        switch priority {
+        case .high: headers += """
+        
+        X-Priority: 1 (Highest)
+        X-MSMail-Priority: High
+        Importance: High
+        """
+        case .normal: break
+        case .low: headers += """
+        
+        X-Priority: 5 (Lowest)
+        Importance: Low
+        """
+        case .none: break
+        }
+        
+        return headers
     }
 }
