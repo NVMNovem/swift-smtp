@@ -66,7 +66,7 @@ private extension Client {
         }
         
         try await sendCommand("DATA")
-        try await sendCommand(mail.formatted())
+        try await sendCommand(mail.headers())
         try await sendCommand(".")
     }
     
