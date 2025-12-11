@@ -30,22 +30,27 @@ public extension Mail {
             self.name = name
             self.email = email
         }
-
-        /// Formatted RFC-like simple representation
-        internal func formatted() -> String {
-            if let name, !name.isEmpty {
-                if name.contains(where: { $0 == "," || $0 == "<" || $0 == ">" }) {
-                    return "\"\(name)\" <\(email)>"
-                } else {
-                    return "\(name) <\(email)>"
-                }
-            } else {
-                return "<\(email)>"
-            }
-        }
     }
 }
 
 extension Mail.Contact: Sendable {}
 
 extension Mail.Contact: Equatable, Hashable {}
+
+// MARK: - Internal Formatting
+internal extension Mail.Contact {
+    
+    /// Formatted RFC-like simple representation
+    func formatted() -> String {
+        if let name, !name.isEmpty {
+            if name.contains(where: { $0 == "," || $0 == "<" || $0 == ">" }) {
+                return "\"\(name)\" <\(email)>"
+            } else {
+                return "\(name) <\(email)>"
+            }
+        } else {
+            return "<\(email)>"
+        }
+    }
+}
+

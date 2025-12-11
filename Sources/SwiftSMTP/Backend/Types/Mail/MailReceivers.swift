@@ -11,14 +11,25 @@ public extension Mail {
         
         case single(Contact)
         case multiple([Contact])
-        
-        var all: [Contact] {
-            switch self {
-            case .single(let contact): [contact]
-            case .multiple(let contacts): contacts
-            }
-        }
     }
 }
 
 extension Mail.Receivers: Sendable {}
+
+public extension Mail.Receivers {
+    
+    var all: [Mail.Contact] {
+        switch self {
+        case .single(let contact): [contact]
+        case .multiple(let contacts): contacts
+        }
+    }
+}
+
+// MARK: - Internal Formatting
+internal extension Mail.Receivers {
+    
+    func formatted() -> String {
+        all.map { $0.formatted() }.joined(separator: ", ")
+    }
+}
