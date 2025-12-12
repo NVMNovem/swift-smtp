@@ -1,5 +1,5 @@
 //
-//  MailSanitization.swift
+//  String.swift
 //  swift-smtp
 //
 //  Created by Damian Van de Kauter on 12/12/2025.
