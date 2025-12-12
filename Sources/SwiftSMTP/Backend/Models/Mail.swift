@@ -97,10 +97,12 @@ internal extension Mail {
     }
     
     var headers: String {
+        let sanitizedSubject = subject.sanitizedForSMTP()
+        
         var headers = """
         From: \(sender.formatted())
         To: \(receivers.formatted())
-        Subject: \(subject)
+        Subject: \(sanitizedSubject)
         """
         
         switch priority {

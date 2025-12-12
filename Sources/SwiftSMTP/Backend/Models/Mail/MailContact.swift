@@ -41,15 +41,22 @@ extension Mail.Contact: Equatable, Hashable {}
 internal extension Mail.Contact {
     
     /// Formatted RFC-like simple representation
+    ///
+    /// Sanitizes name and email to prevent SMTP injection attacks by removing
+    /// carriage return and line feed characters that could be used to inject
+    /// additional SMTP commands or headers.
     func formatted() -> String {
+        let sanitizedEmail = email.sanitizedForSMTP()
+        
         if let name, !name.isEmpty {
-            if name.contains(where: { $0 == "," || $0 == "<" || $0 == ">" }) {
-                return "\"\(name)\" <\(email)>"
+            let sanitizedName = name.sanitizedForSMTP()
+            if sanitizedName.contains(where: { $0 == "," || $0 == "<" || $0 == ">" }) {
+                return "\"\(sanitizedName)\" <\(sanitizedEmail)>"
             } else {
-                return "\(name) <\(email)>"
+                return "\(sanitizedName) <\(sanitizedEmail)>"
             }
         } else {
-            return "<\(email)>"
+            return "<\(sanitizedEmail)>"
         }
     }
 }
