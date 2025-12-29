@@ -5,6 +5,8 @@
 //  Created by Damian Van de Kauter on 27/11/2025.
 //
 
+import Foundation
+
 import NIO
 import NIOSSL
 import NIOExtras
@@ -100,6 +102,48 @@ extension Transport {
                     continuation.resume(returning: line)
                 }
             }
+        }
+    }
+    
+    func readResponse() async throws -> (code: Int, lines: [String]) {
+        var lines: [String] = []
+        let first = try await readLine()
+        lines.append(first)
+        guard first.count >= 3, let code = Int(first.prefix(3)) else {
+            throw Error.invalidResponse
+        }
+        if first.count > 3 && first[first.index(first.startIndex, offsetBy: 3)] == "-" {
+            while true {
+                let line = try await readLine()
+                lines.append(line)
+                if line.hasPrefix("\(code) ") { break }
+            }
+        }
+        return (code, lines)
+    }
+    
+    func authenticateLogin(username: String, password: String) async throws {
+        sendLine("AUTH LOGIN")
+        let r1 = try await readResponse()
+        guard r1.code == 334 else { throw Error.authenticationFailed }
+        
+        sendLine(Data(username.utf8).base64EncodedString())
+        let r2 = try await readResponse()
+        guard r2.code == 334 else { throw Error.authenticationFailed }
+        
+        sendLine(Data(password.utf8).base64EncodedString())
+        let r3 = try await readResponse()
+        guard r3.code == 235 else { throw Error.authenticationFailed }
+    }
+    
+    func authenticatePlain(_ credentials: SMTPCredentials) async throws {
+        let authString = "\u{00}\(credentials.username)\u{00}\(credentials.password)"
+        let payload = Data(authString.utf8).base64EncodedString()
+        
+        sendLine("AUTH PLAIN \(payload)")
+        let response = try await readResponse()
+        guard response.code == 235 else {
+            throw Error.authenticationFailed
         }
     }
 }

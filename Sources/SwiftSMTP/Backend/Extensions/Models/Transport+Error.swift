@@ -11,6 +11,8 @@ internal extension Transport {
     
     enum Error: Swift.Error {
         case invalidChannel
+        case invalidResponse
+        case authenticationFailed
     }
 }
 
@@ -20,6 +22,10 @@ extension Transport.Error: LocalizedError {
         switch self {
         case .invalidChannel:
             return "Invalid channel."
+        case .invalidResponse:
+            return "Invalid response from server."
+        case .authenticationFailed:
+            return "Authentication failed."
         }
     }
 }
