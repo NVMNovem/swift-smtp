@@ -24,3 +24,10 @@ extension SMTPAuthenticationPolicy {
         }
     }
 }
+
+public extension SMTPAuthenticationPolicy {
+    
+    static func login(username: String, password: String) -> SMTPAuthenticationPolicy {
+        .login(SMTPCredentials(username: username, password: password))
+    }
+}
