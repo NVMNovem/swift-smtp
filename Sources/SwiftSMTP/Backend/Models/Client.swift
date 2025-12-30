@@ -109,8 +109,18 @@ private extension Client {
         }
         
         try await sendCommand("DATA", expecting: [354])
-        try await sendCommand(mail.formatted(), expecting: [250])
-        try await sendCommand(".", expecting: [250])
+
+        // Send message data without expecting a response
+        await transport.sendRaw(mail.formatted())
+
+        // End DATA section
+        await transport.sendLine(".")
+
+        // Read final server response for DATA
+        let response = try await transport.readResponse()
+        guard response.code == 250 else {
+            throw Error.invalidResponse(response.lines.joined(separator: "\n"))
+        }
     }
     
     @discardableResult

@@ -92,6 +92,14 @@ extension Transport {
         channel.writeAndFlush(buffer, promise: nil)
     }
     
+    func sendRaw(_ string: String) {
+        guard let channel else { return }
+
+        var buffer = channel.allocator.buffer(capacity: string.utf8.count)
+        buffer.writeString(string)
+        channel.writeAndFlush(buffer, promise: nil)
+    }
+    
     func readLine() async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
             if !lineBuffer.isEmpty {
