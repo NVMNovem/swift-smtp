@@ -110,8 +110,7 @@ private extension Client {
         
         try await sendCommand("DATA", expecting: [354])
         try await sendCommand(mail.formatted(), expecting: [250])
-        let result = try await sendCommand(".", expecting: [250])
-        print(result.description)
+        try await sendCommand(".", expecting: [250])
     }
     
     @discardableResult
@@ -124,6 +123,9 @@ private extension Client {
         guard expectedCodes.contains(response.code) else {
             throw Error.invalidResponse(response.lines.joined(separator: "\n"))
         }
-        return SMTPResponse(code: response.code, lines: response.lines)
+        let smtpResponse = SMTPResponse(code: response.code, lines: response.lines)
+        
+        print(smtpResponse.description)
+        return smtpResponse
     }
 }
