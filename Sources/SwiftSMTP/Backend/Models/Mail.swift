@@ -103,6 +103,7 @@ internal extension Mail {
         From: \(sender.formatted())
         To: \(receivers.formatted())
         Subject: \(sanitizedSubject)
+        Date: \(Date().rfc2822String())
         """
         
         switch priority {

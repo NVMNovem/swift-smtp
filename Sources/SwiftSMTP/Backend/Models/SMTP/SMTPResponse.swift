@@ -17,3 +17,10 @@ internal struct SMTPResponse {
 }
 
 extension SMTPResponse: Sendable {}
+
+extension SMTPResponse: CustomStringConvertible {
+    
+    internal var description: String {
+        "[\(code.formatted())]" + lines.joined(separator: "\n   ")
+    }
+}

@@ -110,7 +110,8 @@ private extension Client {
         
         try await sendCommand("DATA", expecting: [354])
         try await sendCommand(mail.formatted(), expecting: [250])
-        try await sendCommand(".", expecting: [250])
+        let result = try await sendCommand(".", expecting: [250])
+        print(result.description)
     }
     
     @discardableResult
