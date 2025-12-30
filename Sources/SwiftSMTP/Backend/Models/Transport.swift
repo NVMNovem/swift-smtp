@@ -38,7 +38,7 @@ internal actor Transport {
     internal func connect() async throws {
         let bootstrap = ClientBootstrap(group: group)
             .channelInitializer { channel in
-                channel.pipeline.addHandler(ByteToMessageHandler(LineBasedFrameDecoder()))
+                channel.pipeline.addHandler(LineDecoderHandler())
                     .flatMap { _ in
                         // Use Task to hop into actor context when a line is received.
                         channel.pipeline.addHandler(LineReaderHandler { [weak self] line in
@@ -152,6 +152,26 @@ extension Transport {
         let response = try await readResponse()
         guard response.code == 235 else {
             throw Error.authenticationFailed
+        }
+    }
+}
+
+private extension Transport {
+    
+    /// A @unchecked Sendable wrapper for ByteToMessageHandler<LineBasedFrameDecoder>
+    ///
+    private final class LineDecoderHandler: ChannelInboundHandler, @unchecked Sendable {
+        
+        typealias InboundIn = ByteBuffer
+        
+        private let handler: ByteToMessageHandler<LineBasedFrameDecoder>
+        
+        init() {
+            self.handler = ByteToMessageHandler(LineBasedFrameDecoder())
+        }
+        
+        func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+            handler.channelRead(context: context, data: data)
         }
     }
 }
