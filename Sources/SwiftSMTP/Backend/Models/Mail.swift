@@ -89,11 +89,7 @@ internal extension Mail {
     
     /// Formatted RFC-like simple representation
     func formatted() -> String {
-        """
-        \(headers)
-        
-        \(body)
-        """
+        "\(headers)\r\n\r\n\(body)\r\n"
     }
     
     var headers: String {
@@ -123,6 +119,6 @@ internal extension Mail {
         default: break
         }
         
-        return headers
+        return headers.replacingOccurrences(of: "\n", with: "\r\n")
     }
 }
