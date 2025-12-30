@@ -107,19 +107,20 @@ internal extension Mail {
         """
         
         switch priority {
-        case .high: headers += """
-        
-        X-Priority: 1 (Highest)
-        X-MSMail-Priority: High
-        Importance: High
-        """
-        case .normal: break
-        case .low: headers += """
-        
-        X-Priority: 5 (Lowest)
-        Importance: Low
-        """
-        case .none: break
+        case .high:
+            headers += """
+            
+            X-Priority: 1 (Highest)
+            X-MSMail-Priority: High
+            Importance: High
+            """
+        case .low:
+            headers += """
+            
+            X-Priority: 5 (Lowest)
+            Importance: Low
+            """
+        default: break
         }
         
         return headers
