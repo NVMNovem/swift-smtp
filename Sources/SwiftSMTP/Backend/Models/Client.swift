@@ -11,17 +11,20 @@ public final class Client {
     
     private let transport: Transport
     private let heloName: String
-    private let useTLS: Bool
+    private let authentication: SMTPAuthenticationPolicy
+    
+    private var state: SMTPState = .disconnected
+    private var capabilities = SMTPCapabilities()
     
     public init(
         host: String,
         port: Int,
         heloName: String = "localhost",
-        useTLS: Bool = false
+        authentication: SMTPAuthenticationPolicy = .none
     ) {
         self.transport = Transport(host: host, port: port)
         self.heloName = heloName
-        self.useTLS = useTLS
+        self.authentication = authentication
     }
 }
 
@@ -29,34 +32,74 @@ public extension Client {
     
     func send(_ mails: Mail...) async throws {
         try await transport.connect()
+        state = .connected
         
-        try await sendCommand("EHLO \(heloName)")
+        let ehlo = try await sendCommand("EHLO \(heloName)", expecting: [250])
+        capabilities = SMTPCapabilities(from: ehlo)
+        state = .greeted
         
-        if useTLS {
-            try await sendCommand("STARTTLS")
-            try await transport.startTLS()
+        if authentication.requiresTLS {
+            guard capabilities.supportsStartTLS else {
+                throw Error.invalidResponse("Server does not support STARTTLS")
+            }
             
-            try await sendCommand("EHLO \(heloName)")
+            try await sendCommand("STARTTLS", expecting: [220])
+            try await transport.startTLS()
+            state = .tlsEstablished
+            
+            let ehloTLS = try await sendCommand("EHLO \(heloName)", expecting: [250])
+            capabilities = SMTPCapabilities(from: ehloTLS)
+        }
+        
+        switch authentication {
+        case .none:
+            state = .authenticated
+            
+        case .login(let credentials):
+            guard capabilities.authMechanisms.contains(.login) else {
+                throw Error.invalidResponse("AUTH LOGIN not supported")
+            }
+            try await transport.authenticateLogin(
+                username: credentials.username,
+                password: credentials.password
+            )
+            state = .authenticated
+            
+        case .plain(let credentials):
+            guard capabilities.authMechanisms.contains(.plain) else {
+                throw Error.invalidResponse("AUTH PLAIN not supported")
+            }
+            try await transport.authenticatePlain(credentials)
+            state = .authenticated
+            
+        case .xoauth2:
+            throw Error.invalidResponse("XOAUTH2 not implemented")
         }
         
         for mail in mails {
             try await send(mail)
         }
         
-        try await sendCommand("QUIT")
+        try await sendCommand("QUIT", expecting: [221])
         await transport.close()
+        state = .disconnected
     }
 }
 
 private extension Client {
     
     func send(_ mail: Mail) async throws {
-        try await sendCommand("MAIL FROM:\(mail.sender.formatted())")
+        guard state == .authenticated else {
+            throw Error.invalidResponse("Cannot send mail before authentication")
+        }
+        
+        try await sendCommand("MAIL FROM:\(mail.sender.formatted())", expecting: [250])
+        state = .mailTransaction
         
         var failedRecipientErrors: [Swift.Error] = []
         for recipient in mail.receivers.all {
             do {
-                try await sendCommand("RCPT TO:\(recipient.formatted())")
+                try await sendCommand("RCPT TO:\(recipient.formatted())", expecting: [250, 251])
             } catch {
                 failedRecipientErrors.append(error)
             }
@@ -65,19 +108,34 @@ private extension Client {
             throw Error.invalidResponse("All RCPT TO commands were rejected by server")
         }
         
-        try await sendCommand("DATA")
-        try await sendCommand(mail.formatted())
-        try await sendCommand(".")
+        try await sendCommand("DATA", expecting: [354])
+
+        // Send message data without expecting a response
+        await transport.sendRaw(mail.formatted())
+
+        // End DATA section
+        await transport.sendLine(".")
+
+        // Read final server response for DATA
+        let response = try await transport.readResponse()
+        guard response.code == 250 else {
+            throw Error.invalidResponse(response.lines.joined(separator: "\n"))
+        }
     }
     
     @discardableResult
-    func sendCommand(_ command: String) async throws -> Bool {
+    func sendCommand(
+        _ command: String,
+        expecting expectedCodes: [Int]
+    ) async throws -> SMTPResponse {
         await transport.sendLine(command)
-        let response = try await transport.readLine()
+        let response = try await transport.readResponse()
+        guard expectedCodes.contains(response.code) else {
+            throw Error.invalidResponse(response.lines.joined(separator: "\n"))
+        }
+        let smtpResponse = SMTPResponse(code: response.code, lines: response.lines)
         
-        guard response.hasPrefix("2") || response.hasPrefix("3")
-        else { throw Error.invalidResponse(response) }
-        
-        return true
+        print(smtpResponse.description)
+        return smtpResponse
     }
 }

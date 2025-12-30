@@ -89,11 +89,7 @@ internal extension Mail {
     
     /// Formatted RFC-like simple representation
     func formatted() -> String {
-        """
-        \(headers)
-        
-        \(body)
-        """
+        "\(headers)\r\n\r\n\(body)\r\n"
     }
     
     var headers: String {
@@ -103,24 +99,26 @@ internal extension Mail {
         From: \(sender.formatted())
         To: \(receivers.formatted())
         Subject: \(sanitizedSubject)
+        Date: \(Date().rfc2822String())
         """
         
         switch priority {
-        case .high: headers += """
-        
-        X-Priority: 1 (Highest)
-        X-MSMail-Priority: High
-        Importance: High
-        """
-        case .normal: break
-        case .low: headers += """
-        
-        X-Priority: 5 (Lowest)
-        Importance: Low
-        """
-        case .none: break
+        case .high:
+            headers += """
+            
+            X-Priority: 1 (Highest)
+            X-MSMail-Priority: High
+            Importance: High
+            """
+        case .low:
+            headers += """
+            
+            X-Priority: 5 (Lowest)
+            Importance: Low
+            """
+        default: break
         }
         
-        return headers
+        return headers.replacingOccurrences(of: "\n", with: "\r\n")
     }
 }
