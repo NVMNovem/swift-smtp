@@ -16,6 +16,8 @@ public extension Mail {
 
 extension Mail.Receivers: Sendable {}
 
+extension Mail.Receivers: Equatable {}
+
 public extension Mail.Receivers {
     
     var all: [Mail.Contact] {

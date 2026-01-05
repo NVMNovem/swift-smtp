@@ -97,7 +97,8 @@ private extension Client {
         state = .mailTransaction
         
         var failedRecipientErrors: [Swift.Error] = []
-        for recipient in mail.receivers.all {
+        let recipients = mail.receivers.all + mail.cc + mail.bcc
+        for recipient in recipients {
             do {
                 try await sendCommand("RCPT TO:\(recipient.formatted())", expecting: [250, 251])
             } catch {
@@ -105,15 +106,14 @@ private extension Client {
             }
         }
         if !failedRecipientErrors.isEmpty {
-            throw Error.invalidResponse("All RCPT TO commands were rejected by server")
+            throw Error.invalidResponse("Some RCPT TO commands were rejected by server")
         }
         
         try await sendCommand("DATA", expecting: [354])
-
-        // Send message data without expecting a response
-        await transport.sendRaw(mail.formatted())
-
-        // End DATA section
+        
+        let mimeData = buildMIMEData(from: mail)
+        await transport.sendRaw(mimeData)
+        
         await transport.sendLine(".")
 
         // Read final server response for DATA
@@ -137,5 +137,9 @@ private extension Client {
         
         print(smtpResponse.description)
         return smtpResponse
+    }
+    
+    func buildMIMEData(from mail: Mail) -> Data {
+        MIMEBuilder.build(mail, date: Date(), messageIDDomain: heloName)
     }
 }

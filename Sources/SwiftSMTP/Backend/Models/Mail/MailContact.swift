@@ -23,8 +23,8 @@ public extension Mail {
     /// ```
     struct Contact {
         
-        private let name: String?
-        private let email: Address
+        let name: String?
+        let email: Address
 
         public init(_ name: String? = nil , email: Address) {
             self.name = name
@@ -60,4 +60,3 @@ internal extension Mail.Contact {
         }
     }
 }
-

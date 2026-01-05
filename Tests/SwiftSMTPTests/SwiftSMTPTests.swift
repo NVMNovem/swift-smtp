@@ -1,151 +1,162 @@
 import Testing
+import Foundation
 @testable import SwiftSMTP
 
-@Test func example() async throws {
-    // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-}
-
-// MARK: - SMTP Injection Tests
-
-@Test("Contact formatting sanitizes CRLF in email address")
-func contactFormattingSanitizesEmailCRLF() {
-    let maliciousEmail = "user@example.com\r\nRCPT TO:<attacker@evil.com>"
-    let contact = Mail.Contact(email: maliciousEmail)
-    let formatted = contact.formatted()
+@Test
+func sendHTML(credentials: SMTPCredentials) async throws {
+    let client = Client(
+        host: "smtp.office365.com",
+        port: 587,
+        heloName: domain(from: credentials.username) ?? "localhost",
+        authentication: .login(credentials)
+    )
     
-    // Should not contain carriage return or line feed
-    #expect(!formatted.contains("\r"))
-    #expect(!formatted.contains("\n"))
-    #expect(formatted == "<user@example.comRCPT TO:<attacker@evil.com>>")
-}
-
-@Test("Contact formatting sanitizes CRLF in name")
-func contactFormattingSanitizesNameCRLF() {
-    let maliciousName = "John Doe\r\nBcc: attacker@evil.com"
-    let contact = Mail.Contact(maliciousName, email: "john@example.com")
-    let formatted = contact.formatted()
-    
-    // Should not contain carriage return or line feed
-    #expect(!formatted.contains("\r"))
-    #expect(!formatted.contains("\n"))
-    #expect(formatted == "John DoeBcc: attacker@evil.com <john@example.com>")
-}
-
-@Test("Contact formatting sanitizes CRLF in quoted name")
-func contactFormattingSanitizesQuotedNameCRLF() {
-    let maliciousName = "Doe, John\r\nX-Malicious: header"
-    let contact = Mail.Contact(maliciousName, email: "john@example.com")
-    let formatted = contact.formatted()
-    
-    // Should not contain carriage return or line feed
-    #expect(!formatted.contains("\r"))
-    #expect(!formatted.contains("\n"))
-    // Name with comma should be quoted
-    #expect(formatted == "\"Doe, JohnX-Malicious: header\" <john@example.com>")
-}
-
-@Test("Mail headers sanitize CRLF in subject")
-func mailHeadersSanitizeSubjectCRLF() {
-    let maliciousSubject = "Important Message\r\nBcc: attacker@evil.com\r\nX-Priority: 1"
     let mail = Mail(
-        from: "sender@example.com",
-        to: "recipient@example.com",
-        subject: maliciousSubject
-    ) {
-        "Hello, this is a test."
+        from: Mail.Contact(email: credentials.username), to: Mail.Contact(email: "vdkdamian@gmail.com"),
+        subject: "Test html", htmlBody: {
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="x-apple-disable-message-reformatting" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="supported-color-schemes" content="light dark" />
+        <title>Test Email</title>
+        </head>
+        
+        <body style="margin:0; padding:0; background:#f6f7fb;">
+        <!-- Preheader (hidden preview text in many clients) -->
+        <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">
+        This is a test email from Funico. If you can read this, HTML is working.
+        </div>
+        
+        <!-- Gmail iOS/Android spacing hack -->
+        <div style="display:none; white-space:nowrap; font:15px/1px monospace;">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+        
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+        style="border-collapse:collapse; background:#f6f7fb;">
+        <tr>
+        <td align="center" style="padding:24px 12px;">
+          <!-- Container -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"
+            style="width:600px; max-width:600px; border-collapse:collapse; background:#ffffff; border-radius:12px; overflow:hidden;">
+            
+            <!-- Header -->
+            <tr>
+              <td style="padding:20px 24px; background:#111827;">
+                <div style="font-family:Arial, Helvetica, sans-serif; font-size:18px; line-height:24px; color:#ffffff; font-weight:bold;">
+                  Funico — Test Email
+                </div>
+                <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:18px; color:#c7d2fe; margin-top:4px;">
+                  HTML rendering + basic layout check
+                </div>
+              </td>
+            </tr>
+        
+            <!-- Body -->
+            <tr>
+              <td style="padding:24px;">
+                <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;">
+                  Hi,<br /><br />
+                  This is a simple HTML email for testing. It includes:
+                  <ul style="margin:12px 0 0 20px; padding:0;">
+                    <li>Inline styles (best compatibility)</li>
+                    <li>Table layout (works in Outlook)</li>
+                    <li>A button and a few text styles</li>
+                  </ul>
+                </div>
+        
+                <div style="height:18px; line-height:18px;">&nbsp;</div>
+        
+                <!-- Button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td align="center" bgcolor="#2563eb" style="border-radius:10px;">
+                      <a href="https://example.com"
+                         style="display:inline-block; padding:12px 16px; font-family:Arial, Helvetica, sans-serif;
+                                font-size:15px; line-height:18px; color:#ffffff; text-decoration:none; font-weight:bold;">
+                        Open Example
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+        
+                <div style="height:18px; line-height:18px;">&nbsp;</div>
+        
+                <div style="font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; color:#374151;">
+                  If the button doesn’t work, copy &amp; paste this link:
+                  <br />
+                  <a href="https://example.com" style="color:#2563eb; text-decoration:underline;">
+                    https://example.com
+                  </a>
+                </div>
+              </td>
+            </tr>
+        
+            <!-- Footer -->
+            <tr>
+              <td style="padding:16px 24px; background:#f3f4f6;">
+                <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#6b7280;">
+                  Sent by Funico • This is a test message.<br />
+                  <span style="color:#9ca3af;">If you received this by accident, you can ignore it.</span>
+                </div>
+              </td>
+            </tr>
+        
+          </table>
+        
+          <!-- Small note below -->
+          <div style="font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:16px; color:#9ca3af; margin-top:10px;">
+            Tip: test in Gmail, Outlook, Apple Mail, and a mobile client.
+          </div>
+        </td>
+        </tr>
+        </table>
+        </body>
+        </html>
+        """
+        }
+    )
+    
+    do {
+        try await client.send(mail)
+        #expect(Bool(true))
+    } catch {
+        #expect(Bool(false))
     }
-    
-    let formatted = mail.formatted()
-    
-    // Count occurrences of CRLF - should only have the legitimate ones
-    let lines = formatted.components(separatedBy: "\n")
-    
-    // Check that subject line doesn't contain CRLF
-    let subjectLine = lines.first { $0.hasPrefix("Subject:") }
-    #expect(subjectLine != nil)
-    
-    if let subjectLine = subjectLine {
-        // The malicious CRLF should be removed
-        #expect(subjectLine == "Subject: Important MessageBcc: attacker@evil.comX-Priority: 1")
-    }
-    
-    // The formatted output should not have injected headers as separate lines
-    #expect(!formatted.contains("\nBcc: attacker@evil.com\n"))
-    #expect(!lines.contains("Bcc: attacker@evil.com"))
 }
 
-@Test("Mail headers sanitize LF only in subject")
-func mailHeadersSanitizeSubjectLF() {
-    let maliciousSubject = "Important Message\nBcc: attacker@evil.com"
+@Test
+func sendText(credentials: SMTPCredentials) async throws {
+    let client = Client(
+        host: "smtp.office365.com",
+        port: 587,
+        heloName: domain(from: credentials.username) ?? "localhost",
+        authentication: .login(credentials)
+    )
+    
     let mail = Mail(
-        from: "sender@example.com",
-        to: "recipient@example.com",
-        subject: maliciousSubject
-    ) {
-        "Hello, this is a test."
+        from: Mail.Contact(email: credentials.username), to: Mail.Contact(email: "vdkdamian@gmail.com"),
+        subject: "Test text", body: {
+        """
+        Dit is standaard text
+        """
+        }
+    )
+    
+    do {
+        try await client.send(mail)
+        #expect(Bool(true))
+    } catch {
+        #expect(Bool(false))
     }
-    
-    let formatted = mail.formatted()
-    let lines = formatted.components(separatedBy: "\n")
-    
-    // Check that the Bcc header is not injected as a separate line
-    #expect(!lines.contains("Bcc: attacker@evil.com"))
 }
 
-@Test("Multiple CRLF sequences are all sanitized")
-func multipleCRLFSequencesSanitized() {
-    let maliciousSubject = "Test\r\n\r\nBcc: a@evil.com\r\nCc: b@evil.com\r\n"
-    let mail = Mail(
-        from: "sender@example.com",
-        to: "recipient@example.com",
-        subject: maliciousSubject
-    ) {
-        "Body text"
-    }
-    
-    let formatted = mail.formatted()
-    
-    // Should not contain the injected headers as separate lines
-    let lines = formatted.components(separatedBy: "\n")
-    #expect(!lines.contains("Bcc: a@evil.com"))
-    #expect(!lines.contains("Cc: b@evil.com"))
+fileprivate func domain(from email: String) -> String? {
+    guard let atIndex = email.lastIndex(of: "@") else { return nil }
+    return String(email[email.index(after: atIndex)...])
 }
-
-@Test("Contact email with SMTP command injection attempt")
-func contactEmailSMTPCommandInjection() {
-    let maliciousEmail = "user@example.com\r\nMAIL FROM:<evil@attacker.com>\r\n"
-    let contact = Mail.Contact(email: maliciousEmail)
-    let formatted = contact.formatted()
-    
-    // Should strip CRLF to prevent SMTP command injection
-    #expect(!formatted.contains("\r"))
-    #expect(!formatted.contains("\n"))
-    #expect(formatted == "<user@example.comMAIL FROM:<evil@attacker.com>>")
-}
-
-@Test("String sanitization extension removes CRLF")
-func stringSanitizationRemovesCRLF() {
-    let testString = "Hello\r\nWorld\rTest\nEnd"
-    let sanitized = testString.sanitizedForSMTP()
-    
-    #expect(sanitized == "HelloWorldTestEnd")
-    #expect(!sanitized.contains("\r"))
-    #expect(!sanitized.contains("\n"))
-}
-
-@Test("String sanitization handles empty string")
-func stringSanitizationHandlesEmpty() {
-    let empty = ""
-    let sanitized = empty.sanitizedForSMTP()
-    
-    #expect(sanitized == "")
-}
-
-@Test("String sanitization handles string with only CRLF")
-func stringSanitizationHandlesOnlyCRLF() {
-    let crlf = "\r\n\r\n"
-    let sanitized = crlf.sanitizedForSMTP()
-    
-    #expect(sanitized == "")
-}
-

@@ -92,11 +92,11 @@ extension Transport {
         channel.writeAndFlush(buffer, promise: nil)
     }
     
-    func sendRaw(_ string: String) {
+    func sendRaw(_ data: Data) {
         guard let channel else { return }
-
-        var buffer = channel.allocator.buffer(capacity: string.utf8.count)
-        buffer.writeString(string)
+        
+        var buffer = channel.allocator.buffer(capacity: data.count)
+        buffer.writeBytes(data)
         channel.writeAndFlush(buffer, promise: nil)
     }
     
