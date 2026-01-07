@@ -69,10 +69,10 @@ internal extension Mail.Contact {
     /// Sanitizes name and email to prevent SMTP injection attacks by removing
     /// carriage return and line feed characters that could be used to inject
     /// additional SMTP commands or headers.
-    func formatted() -> String {
+    func formatted(includeName: Bool = true) -> String {
         let sanitizedEmail = email.sanitizedForSMTP()
         
-        if let name, !name.isEmpty {
+        if let name, !name.isEmpty, includeName {
             let sanitizedName = name.sanitizedForSMTP()
             if sanitizedName.contains(where: { $0 == "," || $0 == "<" || $0 == ">" }) {
                 return "\"\(sanitizedName)\" <\(sanitizedEmail)>"
@@ -82,5 +82,17 @@ internal extension Mail.Contact {
         } else {
             return "<\(sanitizedEmail)>"
         }
+    }
+}
+
+internal extension Collection where Element == Mail.Contact {
+    
+    /// Formatted RFC-like simple representation
+    ///
+    /// Sanitizes name and email to prevent SMTP injection attacks by removing
+    /// carriage return and line feed characters that could be used to inject
+    /// additional SMTP commands or headers.
+    func formatted(includeName: Bool = true) -> String {
+        self.map { $0.formatted(includeName: includeName) }.joined(separator: ", ")
     }
 }

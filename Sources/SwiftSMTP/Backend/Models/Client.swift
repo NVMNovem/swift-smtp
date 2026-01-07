@@ -13,7 +13,11 @@ public final class Client {
     private let heloName: String
     private let authentication: SMTPAuthenticationPolicy
     
-    private var state: SMTPState = .disconnected
+    private var state: SMTPState = .disconnected {
+        didSet {
+            print("SMTP State: \(state)")
+        }
+    }
     private var capabilities = SMTPCapabilities()
     
     public init(
@@ -92,15 +96,14 @@ private extension Client {
         guard state == .authenticated else {
             throw Error.invalidResponse("Cannot send mail before authentication")
         }
-        
-        try await sendCommand("MAIL FROM:\(mail.sender.formatted())", expecting: [250])
+        try await sendCommand("MAIL FROM:\(mail.sender.formatted(includeName: false))", expecting: [250])
         state = .mailTransaction
         
         var failedRecipientErrors: [Swift.Error] = []
         let recipients = mail.receivers.all + mail.cc.all + mail.bcc.all
         for recipient in recipients {
             do {
-                try await sendCommand("RCPT TO:\(recipient.formatted())", expecting: [250, 251])
+                try await sendCommand("RCPT TO:\(recipient.formatted(includeName: false))", expecting: [250, 251])
             } catch {
                 failedRecipientErrors.append(error)
             }

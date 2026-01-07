@@ -18,15 +18,15 @@ public enum MIMEBuilder {
     public static func build(_ mail: Mail, date: Date = Date(), messageIDDomain: String) -> Data {
         var buffer = Data()
 
-        buffer.append("From: \(formatAddress(mail.sender))\(crlf)")
-        buffer.append("To: \(formatAddresses(mail.receivers.all))\(crlf)")
+        buffer.append("From: \(mail.sender.formatted())\(crlf)")
+        buffer.append("To: \(mail.receivers.all.formatted())\(crlf)")
 
         if let cc = mail.cc {
-            buffer.append("Cc: \(formatAddresses(cc.all))\(crlf)")
+            buffer.append("Cc: \(cc.all.formatted())\(crlf)")
         }
 
         if let reply = mail.replyTo {
-            buffer.append("Reply-To: \(formatAddress(reply))\(crlf)")
+            buffer.append("Reply-To: \(reply.formatted())\(crlf)")
         }
 
         buffer.append("Subject: \(encodeSubject(mail.subject))\(crlf)")
@@ -240,20 +240,6 @@ public enum MIMEBuilder {
 
     private static func boundaryIdentifier() -> String {
         "swift-smtp-boundary-\(UUID().uuidString)"
-    }
-
-    private static func formatAddresses(_ addresses: [Mail.Contact]) -> String {
-        addresses.map { formatAddress($0) }.joined(separator: ", ")
-    }
-
-    private static func formatAddress(_ address: Mail.Contact) -> String {
-        let sanitizedEmail = sanitizeHeaderValue(address.email)
-        if let name = address.name, !name.isEmpty {
-            let sanitizedName = sanitizeHeaderValue(name).replacingOccurrences(of: "\"", with: "\\\"")
-            return "\"\(sanitizedName)\" <\(sanitizedEmail)>"
-        } else {
-            return "<\(sanitizedEmail)>"
-        }
     }
 
     private static func sanitizeHeaderValue(_ value: String) -> String {

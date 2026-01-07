@@ -11,9 +11,7 @@ func sendHTML(credentials: SMTPCredentials) async throws {
         authentication: .login(credentials)
     )
     
-    let mail = Mail(
-        from: Mail.Contact(email: credentials.username), to: Mail.Contact(email: "vdkdamian@gmail.com"),
-        subject: "Test html", htmlBody: {
+    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "Test html") {
         """
         <!doctype html>
         <html lang="en">
@@ -120,7 +118,6 @@ func sendHTML(credentials: SMTPCredentials) async throws {
         </html>
         """
         }
-    )
     
     do {
         try await client.send(mail)
@@ -139,14 +136,7 @@ func sendText(credentials: SMTPCredentials) async throws {
         authentication: .login(credentials)
     )
     
-    let mail = Mail(
-        from: Mail.Contact(email: credentials.username), to: Mail.Contact(email: "vdkdamian@gmail.com"),
-        subject: "Test text", body: {
-        """
-        Dit is standaard text
-        """
-        }
-    )
+    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "Test text", text: "Dit is standaard text")
     
     do {
         try await client.send(mail)
