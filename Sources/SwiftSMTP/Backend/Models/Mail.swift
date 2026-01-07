@@ -116,6 +116,26 @@ public extension Mail {
             attachments: attachments, subject: subject, body: .html(html())
         )
     }
+    
+    init(
+        from sender: Contact, to receivers: [Contact], cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, text: String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .plain(text)
+        )
+    }
+    
+    init(
+        from sender: Contact, to receivers: [Contact], cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, html: () -> String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .html(html())
+        )
+    }
 }
 
 public extension Mail {
