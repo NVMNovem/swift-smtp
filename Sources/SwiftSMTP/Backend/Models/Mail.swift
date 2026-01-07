@@ -38,88 +38,36 @@ public struct Mail {
     
     public let sender: Contact
     public let receivers: Receivers
-    public let cc: [Contact]
-    public let bcc: [Contact]
+    public let cc: Receivers?
+    public let bcc: Receivers?
     public let replyTo: Contact?
-    public let subject: String
-    public let body: Body
     public let attachments: [Attachment]
     public let inlineImages: [InlineImage]
+    public let subject: String
+    public let body: Body
     
     public private(set) var priority: Priority? = nil
 
-    public init(
+    fileprivate init(
         from sender: Contact,
-        to receivers: [Contact],
-        subject: String,
-        body: Body,
-        cc: [Contact] = [],
-        bcc: [Contact] = [],
+        to receivers: Receivers,
+        cc: Receivers? = nil,
+        bcc: Receivers? = nil,
+        replyTo: Contact? = nil,
         attachments: [Attachment] = [],
         inlineImages: [InlineImage] = [],
-        replyTo: Contact? = nil
+        subject: String,
+        body: Body
     ) {
         self.sender = sender
-        self.receivers = .multiple(receivers)
+        self.receivers = receivers
         self.cc = cc
         self.bcc = bcc
         self.replyTo = replyTo
-        self.subject = subject
-        self.body = body
         self.attachments = attachments
         self.inlineImages = inlineImages
-    }
-
-    public init(
-        from sender: Contact,
-        to receivers: [Contact],
-        subject: String,
-        plainText: String,
-        html: String? = nil,
-        cc: [Contact] = [],
-        bcc: [Contact] = [],
-        attachments: [Attachment] = [],
-        inlineImages: [InlineImage] = [],
-        replyTo: Contact? = nil
-    ) {
-        let body: Body = html.map { .alternative(plain: plainText, html: $0) } ?? .plain(plainText)
-        self.init(
-            from: sender,
-            to: receivers,
-            subject: subject,
-            body: body,
-            cc: cc,
-            bcc: bcc,
-            attachments: attachments,
-            inlineImages: inlineImages,
-            replyTo: replyTo
-        )
-    }
-
-    public init(
-        from senderAddress: Address,
-        to receiverAddresses: [Address],
-        subject: String,
-        plainText: String,
-        html: String? = nil,
-        cc: [Address] = [],
-        bcc: [Address] = [],
-        attachments: [Attachment] = [],
-        inlineImages: [InlineImage] = [],
-        replyTo: Address? = nil
-    ) {
-        self.init(
-            from: Contact(email: senderAddress),
-            to: receiverAddresses.map { Contact(email: $0) },
-            subject: subject,
-            plainText: plainText,
-            html: html,
-            cc: cc.map { Contact(email: $0) },
-            bcc: bcc.map { Contact(email: $0) },
-            attachments: attachments,
-            inlineImages: inlineImages,
-            replyTo: replyTo.map { Contact(email: $0) }
-        )
+        self.subject = subject
+        self.body = body
     }
 }
 
@@ -129,33 +77,44 @@ extension Mail: Equatable {}
 
 public extension Mail {
     
-    init(from sender: Contact, to receiver: Contact, subject: String, body: () -> String) {
-        self.init(from: sender, to: [receiver], subject: subject, plainText: body())
-    }
-    
-    init(from sender: Contact, to receiver: Contact, subject: String, htmlBody: () -> String) {
-        self.init(from: sender, to: [receiver], subject: subject, body: .html(htmlBody()))
-    }
-    
-    init(from senderAddress: Address, to receiverAddress: Address, subject: String, body: () -> String) {
-        self.init(from: senderAddress, to: [receiverAddress], subject: subject, plainText: body())
-    }
-    
-    init(from senderAddress: Address, to receiverAddress: Address, subject: String, htmlBody: () -> String) {
+    init(
+        from sender: Contact, to receiver: Contact, cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, text: String
+    ) {
         self.init(
-            from: Contact(email: senderAddress),
-            to: [Contact(email: receiverAddress)],
-            subject: subject,
-            body: .html(htmlBody())
+            from: sender, to: .single(receiver), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .plain(text)
         )
     }
-
-    init(from sender: Contact, to receivers: Contact..., subject: String, body: () -> String) {
-        self.init(from: sender, to: Array(receivers), subject: subject, plainText: body())
+    
+    init(
+        from sender: Contact, to receiver: Contact, cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, html: () -> String
+    ) {
+        self.init(
+            from: sender, to: .single(receiver), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .html(html())
+        )
     }
-
-    init(from senderAddress: Address, to receiverAddresses: Address..., subject: String, body: () -> String) {
-        self.init(from: senderAddress, to: Array(receiverAddresses), subject: subject, plainText: body())
+    
+    init(
+        from sender: Contact, to receivers: Contact..., cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, text: String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .plain(text)
+        )
+    }
+    
+    init(
+        from sender: Contact, to receivers: Contact..., cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, html: () -> String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .html(html())
+        )
     }
 }
 
@@ -184,12 +143,12 @@ internal extension Mail {
         Date: \(Date().rfc5322String())
         """
 
-        if !cc.isEmpty {
-            headers += "\nCc: \(cc.map { $0.formatted() }.joined(separator: ", "))"
+        if let cc {
+            headers += "\nCc: \(cc.formatted())"
         }
 
-        if !bcc.isEmpty {
-            headers += "\nBcc: \(bcc.map { $0.formatted() }.joined(separator: ", "))"
+        if let bcc {
+            headers += "\nBcc: \(bcc.formatted())"
         }
 
         if let replyTo {

@@ -21,8 +21,8 @@ public enum MIMEBuilder {
         buffer.append("From: \(formatAddress(mail.sender))\(crlf)")
         buffer.append("To: \(formatAddresses(mail.receivers.all))\(crlf)")
 
-        if !mail.cc.isEmpty {
-            buffer.append("Cc: \(formatAddresses(mail.cc))\(crlf)")
+        if let cc = mail.cc {
+            buffer.append("Cc: \(formatAddresses(cc.all))\(crlf)")
         }
 
         if let reply = mail.replyTo {

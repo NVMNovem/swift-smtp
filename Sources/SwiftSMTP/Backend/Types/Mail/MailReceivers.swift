@@ -28,6 +28,17 @@ public extension Mail.Receivers {
     }
 }
 
+public extension Optional where Wrapped == Mail.Receivers {
+    
+    var all: [Mail.Contact] {
+        switch self {
+        case .single(let contact): [contact]
+        case .multiple(let contacts): contacts
+        case .none: []
+        }
+    }
+}
+
 // MARK: - Internal Formatting
 internal extension Mail.Receivers {
     

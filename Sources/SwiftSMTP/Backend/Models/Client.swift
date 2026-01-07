@@ -97,7 +97,7 @@ private extension Client {
         state = .mailTransaction
         
         var failedRecipientErrors: [Swift.Error] = []
-        let recipients = mail.receivers.all + mail.cc + mail.bcc
+        let recipients = mail.receivers.all + mail.cc.all + mail.bcc.all
         for recipient in recipients {
             do {
                 try await sendCommand("RCPT TO:\(recipient.formatted())", expecting: [250, 251])
