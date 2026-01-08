@@ -12,6 +12,10 @@ let package = Package(
         .library(
             name: "SwiftSMTP",
             targets: ["SwiftSMTP"]
+        ),
+        .library(
+            name: "SwiftHTML",
+            targets: ["SwiftHTML"]
         )
     ],
     dependencies: [
@@ -31,6 +35,14 @@ let package = Package(
         .testTarget(
             name: "SwiftSMTPTests",
             dependencies: ["SwiftSMTP"]
+        ),
+        .target(
+            name: "SwiftHTML",
+            dependencies: []
+        ),
+        .testTarget(
+            name: "SwiftHTMLTests",
+            dependencies: ["SwiftHTML"]
         )
     ]
 )
