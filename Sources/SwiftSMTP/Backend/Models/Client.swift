@@ -84,6 +84,10 @@ public extension Client {
             throw Error.invalidResponse("XOAUTH2 not implemented")
         }
         
+        guard state == .authenticated else {
+            throw Error.invalidResponse("Cannot send mail before authentication")
+        }
+        
         for mail in mails {
             try await send(mail)
         }
@@ -97,9 +101,6 @@ public extension Client {
 private extension Client {
     
     func send(_ mail: Mail) async throws {
-        guard state == .authenticated else {
-            throw Error.invalidResponse("Cannot send mail before authentication")
-        }
         try await sendCommand("MAIL FROM:\(mail.sender.formatted(includeName: false))", expecting: [250])
         state = .mailTransaction
         
