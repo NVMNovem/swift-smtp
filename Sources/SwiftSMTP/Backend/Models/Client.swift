@@ -35,6 +35,10 @@ public final class Client {
 public extension Client {
     
     func send(_ mails: Mail...) async throws {
+        try await send(mails)
+    }
+    
+    func send(_ mails: [Mail]) async throws {
         try await transport.connect()
         state = .connected
         
