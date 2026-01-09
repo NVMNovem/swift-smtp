@@ -1,12 +1,12 @@
 //
-//  Img.swift
+//  Image.swift
 //  swift-html
 //
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
+public struct Image: HTMLNode, Attributable, Frameable {
 
-public struct Img: HTMLNode, Attributable {
     public var attributes: Attributes
 
     public init(src: String, alt: String, width: Int? = nil) {
