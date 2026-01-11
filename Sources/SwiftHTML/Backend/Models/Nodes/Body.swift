@@ -7,14 +7,14 @@
 
 public struct Body: HTMLNode, Attributable {
     
-    public var attributes: Attributes
     public let children: [HTMLNode]
-
-    public init(attributes: Attributes = .empty, @HTMLBuilder _ content: () -> [HTMLNode]) {
+    public var attributes: Attributes
+    
+    public init(_ children: [HTMLNode], attributes: Attributes = .empty) {
+        self.children = children
         self.attributes = attributes
-        self.children = content()
     }
-
+    
     public func render(into output: inout String, indent: Int) {
         HTMLElement(tag: "body", attributes: attributes, children: children).render(into: &output, indent: indent)
     }

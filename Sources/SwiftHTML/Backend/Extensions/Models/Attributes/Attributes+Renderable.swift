@@ -10,12 +10,9 @@ extension Attributes: Renderable {
     internal func render() -> String {
         guard !self.isEmpty else { return "" }
         
-        let keys = self.keys.sorted()
-        let rendered = keys
-            .map { key in
-                let value = (self[key] ?? "").escapeHTML()
-                return "\(key)=\"\(value)\""
-            }
+        let attributes = sort ? self.attributes.sorted(by: { $0.name < $1.name }) : self.attributes
+        let rendered = attributes
+            .map { "\($0.name)=\"\($0.value.escapeHTML())\"" }
             .joined(separator: " ")
         
         return " " + rendered

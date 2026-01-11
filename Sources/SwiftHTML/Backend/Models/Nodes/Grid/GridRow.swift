@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct GridRow: HTMLNode {
+public struct GridRow: BodyNode {
     
     public let cells: [HTMLNode]
 

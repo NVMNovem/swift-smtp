@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct Link: HTMLNode, Attributable {
+public struct Link: BodyNode, Attributable {
     
     public var attributes: Attributes
     public let destination: String

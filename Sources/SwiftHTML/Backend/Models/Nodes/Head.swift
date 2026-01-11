@@ -9,8 +9,8 @@ public struct Head: HTMLNode {
     
     public let children: [HTMLNode]
 
-    public init(@HTMLBuilder _ content: () -> [HTMLNode]) {
-        self.children = content()
+    public init(_ children: [HTMLNode]) {
+        self.children = children
     }
 
     public func render(into output: inout String, indent: Int) {

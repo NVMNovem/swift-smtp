@@ -5,24 +5,52 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct HTMLDocument: HTMLNode {
+public struct HTMLDocument: HTMLNode, Attributable {
     
     public private(set) var languageCode: String
-    public private(set) var children: [HTMLNode]
+    
+    public private(set) var body: Body
+    public let head: Head?
+    
+    public var attributes: Attributes {
+        get { body.attributes }
+        set { body.attributes = newValue }
+    }
 
     public init(
         languageCode: String = "en",
-        @HTMLBuilder content: () -> [HTMLNode]
+        @BodyBuilder body: () -> [BodyNode],
+        @HeadBuilder head: () -> [HeadNode]
     ) {
         self.languageCode = languageCode
-        self.children = content()
+        self.body = Body(body())
+        self.head = Head(head())
+    }
+
+    public init(
+        languageCode: String = "en",
+        @BodyBuilder body: () -> Body
+    ) {
+        self.languageCode = languageCode
+        self.body = body()
+        self.head = nil
     }
 
     public func render(into output: inout String, indent: Int) {
         output += "<!doctype html>\n"
+        let indentValue = String.indentation(indent)
+        let attrs = Attributes(["lang": languageCode]).render()
+        output += "\(indentValue)<html\(attrs)>\n"
+
+        var children: [HTMLNode] = [body]
+        if let head {
+            children.insert(head, at: 0)
+        }
         
-        HTMLElement(tag: "html", attributes: ["lang": languageCode], children: children)
-            .render(into: &output, indent: indent)
+        for child in children {
+            child.render(into: &output, indent: indent + 1)
+        }
+        output += "\(indentValue)</html>\n"
     }
 }
 

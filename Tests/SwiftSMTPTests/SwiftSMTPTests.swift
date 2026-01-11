@@ -2,7 +2,7 @@ import Testing
 import Foundation
 @testable import SwiftSMTP
 
-@Test
+@Test(arguments: [SMTPCredentials(username: "", password: "")])
 func sendHTML(credentials: SMTPCredentials) async throws {
     let client = Client(
         host: "smtp.office365.com",
@@ -127,7 +127,7 @@ func sendHTML(credentials: SMTPCredentials) async throws {
     }
 }
 
-@Test
+@Test(arguments: [SMTPCredentials(username: "", password: "")])
 func sendText(credentials: SMTPCredentials) async throws {
     let client = Client(
         host: "smtp.office365.com",

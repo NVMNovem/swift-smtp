@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct Table<Data: RandomAccessCollection>: HTMLNode {
+public struct Table<Data: RandomAccessCollection>: BodyNode {
     
     public let data: Data
     public let gridStyle: String

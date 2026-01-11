@@ -42,7 +42,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SwiftHTMLTests",
-            dependencies: ["SwiftHTML"]
+            dependencies: ["SwiftHTML", "SwiftSMTP"]
         )
     ]
 )

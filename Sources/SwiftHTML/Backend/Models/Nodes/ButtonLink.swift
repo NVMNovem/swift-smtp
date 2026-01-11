@@ -5,16 +5,18 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct ButtonLink: HTMLNode {
+public struct ButtonLink: BodyNode, Attributable  {
     
     public let title: String
     public let destination: String
     public let style: ButtonStyle
+    public var attributes: Attributes
 
-    public init(_ title: String, destination: String, style: ButtonStyle = .default) {
+    public init(_ title: String, destination: String, style: ButtonStyle = .default, attributes: Attributes = .empty) {
         self.title = title
         self.destination = destination
         self.style = style
+        self.attributes = attributes
     }
 
     public func render(into output: inout String, indent: Int) {
@@ -24,7 +26,7 @@ public struct ButtonLink: HTMLNode {
 
         let td = HTMLElement(
             tag: "td",
-            attributes: [
+            attributes: attributes + [
                 "bgcolor": style.background.value,
                 "style": "border-radius: \(style.cornerRadius)px;"
             ],

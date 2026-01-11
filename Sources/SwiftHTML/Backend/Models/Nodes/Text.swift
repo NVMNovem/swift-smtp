@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct Text: HTMLNode, Attributable {
+public struct Text: BodyNode, Attributable {
     
     public var attributes: Attributes
     public let nodes: [HTMLNode]
@@ -13,6 +13,11 @@ public struct Text: HTMLNode, Attributable {
     public init(_ value: String) {
         self.attributes = [:]
         self.nodes = [HTMLText(value)]
+    }
+    
+    public init(@TextBuilder _ content: () -> [HTMLNode]) {
+        self.attributes = [:]
+        self.nodes = content()
     }
 
     public init(markdown: Markdown) {

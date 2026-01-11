@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct Image: HTMLNode, Attributable, Frameable {
+public struct Image: BodyNode, Attributable, Frameable {
 
     public var attributes: Attributes
 

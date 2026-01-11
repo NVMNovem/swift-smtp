@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct Grid: HTMLNode, Attributable {
+public struct Grid: BodyNode, Attributable {
     
     public var attributes: Attributes
     public let rows: [HTMLNode]
