@@ -10,6 +10,20 @@ import Foundation
 @testable import SwiftHTML
 import SwiftSMTP
 
+struct OpenInvoice {
+    
+    let invoiceNumber: String
+    let amount: Double
+    let dueDate: Date
+    let invoiceDate: Date
+    
+    static let examples: [OpenInvoice] = [
+        .init(invoiceNumber: "F-12345", amount: 199.99, dueDate: Date().addingTimeInterval(60 * 60 * 24 * 7), invoiceDate: Date()),
+        .init(invoiceNumber: "F-67890", amount: 24.99, dueDate: Date().addingTimeInterval(60 * 60 * 24 * 3), invoiceDate: Date()),
+        .init(invoiceNumber: "F-54321", amount: 349.50, dueDate: Date().addingTimeInterval(60 * 60 * 24 * 14), invoiceDate: Date())
+    ]
+}
+
 @Test
 func renderHTML1() async throws {
     let cardCornerRadius: Int = 16
@@ -97,7 +111,23 @@ func renderHTML1() async throws {
                                 }
                                 Spacer(height: 18)
                                 
-                                //Invoices Table hier
+                                Table(
+                                    OpenInvoice.examples,
+                                    headerCellStyle: "padding:10px 12px; background:#f3f4f6; border-bottom:1px solid #e5e7eb; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:16px; color:#111827; font-weight:bold;",
+                                    cellStyle: "padding:10px 12px; border-bottom:1px solid #e5e7eb; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:18px; color:#111827;"
+                                ) {
+                                    Column("Factuur", alignment: .leading)
+                                    Column("Datum", alignment: .leading)
+                                    Column("Vervaldatum", alignment: .leading)
+                                    Column("Bedrag", alignment: .trailing)
+                                } row: { openInvoice in
+                                    Text(openInvoice.invoiceNumber)
+                                    Text(openInvoice.invoiceDate.formatted(date: .numeric, time: .omitted))
+                                    Text(openInvoice.dueDate.formatted(date: .numeric, time: .omitted))
+                                    Text(openInvoice.amount.formatted(.currency(code: "EUR")))
+                                }
+                                .style("border:1px solid #D1DAE0; border-radius:10px; overflow:hidden;")
+
                                 
                                 Spacer(height: 18)
                                 Text {
@@ -114,7 +144,7 @@ func renderHTML1() async throws {
                                             Grid(role: .presentation, cellpadding: 0, cellspacing: 0, border: 0) {
                                                 GridRow {
                                                     GridCell(alignment: .center, attributes: ["bgcolor": "#2563eb"]) {
-                                                        ButtonLink("Facturen", destination: "www.novem.com/invoices")
+                                                        Link("Bekijk uw facturen", destination: "www.novem.com/invoices")
                                                             .style("display:inline-block; padding:12px 18px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:18px; color:#ffffff; text-decoration:none; font-weight:700;")
                                                     }
                                                     .style("border-radius:8px;")
@@ -130,9 +160,11 @@ func renderHTML1() async throws {
                                     "Contacteer ons via"
                                     Link("no-reply@novem.info", destination: "mailto:no-reply@novem.info")
                                         .style("color:#2563eb; text-decoration:underline;")
-                                    Text(markdown: " of door te bellen. \n\n Met vriendelijke groet \n Novem")
+                                    " of door te bellen."
                                 }
                                 .style("font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;")
+                                Text(markdown: "\n\n Met vriendelijke groet \n Novem")
+                                    .style("font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;")
                                 
                                 GridRow {
                                     GridCell {
@@ -169,11 +201,11 @@ func renderHTML1() async throws {
     let client = Client(
         host: "smtp.office365.com",
         port: 587,
-        heloName: "",
-        authentication: .login(username: "", password: "")
+        heloName: "funico.info",
+        authentication: .login(username: "no-reply@funico.info", password: "Funico00")
     )
     
-    let mail = Mail(from: "", to: "", subject: "Test htmlbuilder") {
+    let mail = Mail(from: "no-reply@funico.info", to: "vdkdamian@gmail.com", subject: "Test htmlbuilder") {
         doc.render()
     }
     

@@ -12,7 +12,7 @@ public struct Grid: BodyNode, Attributable {
 
     public init(
         role: Role? = .presentation,
-        width: String? = "100%",
+        width: String? = nil,
         cellpadding: Int = 0,
         cellspacing: Int = 0,
         border: Int = 0,
