@@ -8,8 +8,8 @@
 public struct Table<Data: RandomAccessCollection>: BodyNode, Attributable {
     
     public let data: Data
-    public let headerCellStyle: String?
-    public let cellStyle: String?
+    public let headerCellStyle: CSS?
+    public let cellStyle: CSS?
     public let columns: [Column]
     public let rowBuilder: (Data.Element) -> [HTMLNode]
     
@@ -17,8 +17,8 @@ public struct Table<Data: RandomAccessCollection>: BodyNode, Attributable {
 
     public init(
         _ data: Data,
-        headerCellStyle: String? = nil,
-        cellStyle: String? = nil,
+        headerCellStyle: CSS? = nil,
+        cellStyle: CSS? = nil,
         @ColumnBuilder columns: () -> [Column],
         @CellBuilder row: @escaping (Data.Element) -> [HTMLNode]
     ) {

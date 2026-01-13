@@ -10,7 +10,7 @@ public struct RawHTML: BodyNode, Attributable {
     public let value: String
     public var attributes: Attributes
 
-    public init(_ value: String, attributes: Attributes = .empty,) {
+    public init(_ value: String, attributes: Attributes = .empty) {
         self.value = value
         self.attributes = attributes
     }

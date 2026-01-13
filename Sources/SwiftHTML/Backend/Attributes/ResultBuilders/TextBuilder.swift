@@ -28,7 +28,7 @@ public enum TextBuilder {
             }
             
             public func render(into output: inout String, indent: Int) {
-                output += "\(String.indentation(indent))\(value.escapeHTML())\n"
+                output += "\(String.indentation(indent))\(value.escapeHTML())"
             }
         }
     }

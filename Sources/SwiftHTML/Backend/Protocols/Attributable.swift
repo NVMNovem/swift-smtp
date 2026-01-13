@@ -30,9 +30,9 @@ public extension Attributable {
         attr("class", value)
     }
 
-    func style(_ css: String) -> Self {
+    func style(_ css: CSS) -> Self {
         var copy = self
-        copy.attributes["style"] = copy.attributes["style"].appendStyle(css)
+        copy.attributes["style"] = copy.attributes["style"].appendStyle(css.render())
         return copy
     }
 }
