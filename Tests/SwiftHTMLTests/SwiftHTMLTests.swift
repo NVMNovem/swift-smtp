@@ -168,11 +168,11 @@ func renderHTML1() async throws {
     let client = Client(
         host: "smtp.office365.com",
         port: 587,
-        heloName: "funico.be",
-        authentication: .login(username: "dvandekauter@funico.be", password: "!PFUbvBB4ddurPWqJUYxa12")
+        heloName: "",
+        authentication: .login(username: "", password: "")
     )
     
-    let mail = Mail(from: "dvandekauter@funico.be", to: "vdkdamian@gmail.com", subject: "Test htmlbuilder") {
+    let mail = Mail(from: "", to: "", subject: "Test htmlbuilder") {
         doc.render()
     }
     
