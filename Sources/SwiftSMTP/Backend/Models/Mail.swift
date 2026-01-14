@@ -34,46 +34,107 @@ import Foundation
 ///
 public struct Mail {
     
+    private static let crlf = "\r\n"
+    
     public let sender: Contact
     public let receivers: Receivers
+    public let cc: Receivers?
+    public let bcc: Receivers?
+    public let replyTo: Contact?
+    public let attachments: [Attachment]
+    public let inlineImages: [InlineImage]
     public let subject: String
-    public let body: String
+    public let body: Body
     
     public private(set) var priority: Priority? = nil
 
-    public init(from sender: Contact, to receivers: [Contact], subject: String, body: () -> String) {
+    fileprivate init(
+        from sender: Contact,
+        to receivers: Receivers,
+        cc: Receivers? = nil,
+        bcc: Receivers? = nil,
+        replyTo: Contact? = nil,
+        attachments: [Attachment] = [],
+        inlineImages: [InlineImage] = [],
+        subject: String,
+        body: Body
+    ) {
         self.sender = sender
-        self.receivers = .multiple(receivers)
+        self.receivers = receivers
+        self.cc = cc
+        self.bcc = bcc
+        self.replyTo = replyTo
+        self.attachments = attachments
+        self.inlineImages = inlineImages
         self.subject = subject
-        self.body = body()
-    }
-
-    public init(from senderAddress: Address, to receiverAddresses: [Address], subject: String, body: () -> String) {
-        self.sender = Contact(email: senderAddress)
-        self.receivers = .multiple(receiverAddresses.map { Contact(email: $0) })
-        self.subject = subject
-        self.body = body()
+        self.body = body
     }
 }
 
 extension Mail: Sendable {}
 
+extension Mail: Equatable {}
+
 public extension Mail {
     
-    init(from sender: Contact, to receiver: Contact, subject: String, body: () -> String) {
-        self.init(from: sender, to: [receiver], subject: subject, body: body)
+    init(
+        from sender: Contact, to receiver: Contact, cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, text: String
+    ) {
+        self.init(
+            from: sender, to: .single(receiver), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .plain(text)
+        )
     }
     
-    init(from senderAddress: Address, to receiverAddress: Address, subject: String, body: () -> String) {
-        self.init(from: senderAddress, to: [receiverAddress], subject: subject, body: body)
+    init(
+        from sender: Contact, to receiver: Contact, cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, html: () -> String
+    ) {
+        self.init(
+            from: sender, to: .single(receiver), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .html(html())
+        )
     }
-
-    init(from sender: Contact, to receivers: Contact..., subject: String, body: () -> String) {
-        self.init(from: sender, to: Array(receivers), subject: subject, body: body)
+    
+    init(
+        from sender: Contact, to receivers: Contact..., cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, text: String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .plain(text)
+        )
     }
-
-    init(from senderAddress: Address, to receiverAddresses: Address..., subject: String, body: () -> String) {
-        self.init(from: senderAddress, to: Array(receiverAddresses), subject: subject, body: body)
+    
+    init(
+        from sender: Contact, to receivers: Contact..., cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, html: () -> String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .html(html())
+        )
+    }
+    
+    init(
+        from sender: Contact, to receivers: [Contact], cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, text: String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .plain(text)
+        )
+    }
+    
+    init(
+        from sender: Contact, to receivers: [Contact], cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
+        attachments: [Attachment] = [], subject: String, html: () -> String
+    ) {
+        self.init(
+            from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
+            attachments: attachments, subject: subject, body: .html(html())
+        )
     }
 }
 
@@ -89,7 +150,7 @@ internal extension Mail {
     
     /// Formatted RFC-like simple representation
     func formatted() -> String {
-        "\(headers)\r\n\r\n\(body)\r\n"
+        "\(headers)\r\n\r\n\(body.plainText)\r\n"
     }
     
     var headers: String {
@@ -99,8 +160,20 @@ internal extension Mail {
         From: \(sender.formatted())
         To: \(receivers.formatted())
         Subject: \(sanitizedSubject)
-        Date: \(Date().rfc2822String())
+        Date: \(Date().rfc5322String())
         """
+
+        if let cc {
+            headers += "\nCc: \(cc.formatted())"
+        }
+
+        if let bcc {
+            headers += "\nBcc: \(bcc.formatted())"
+        }
+
+        if let replyTo {
+            headers += "\nReply-To: \(replyTo.formatted())"
+        }
         
         switch priority {
         case .high:
@@ -119,6 +192,6 @@ internal extension Mail {
         default: break
         }
         
-        return headers.replacingOccurrences(of: "\n", with: "\r\n")
+        return headers.replacingOccurrences(of: "\n", with: Mail.crlf)
     }
 }

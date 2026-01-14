@@ -13,7 +13,11 @@ public final class Client {
     private let heloName: String
     private let authentication: SMTPAuthenticationPolicy
     
-    private var state: SMTPState = .disconnected
+    private var state: SMTPState = .disconnected {
+        didSet {
+            print("SMTP State: \(state)")
+        }
+    }
     private var capabilities = SMTPCapabilities()
     
     public init(
@@ -31,6 +35,10 @@ public final class Client {
 public extension Client {
     
     func send(_ mails: Mail...) async throws {
+        try await send(mails)
+    }
+    
+    func send(_ mails: [Mail]) async throws {
         try await transport.connect()
         state = .connected
         
@@ -76,6 +84,10 @@ public extension Client {
             throw Error.invalidResponse("XOAUTH2 not implemented")
         }
         
+        guard state == .authenticated else {
+            throw Error.invalidResponse("Cannot send mail before authentication")
+        }
+        
         for mail in mails {
             try await send(mail)
         }
@@ -89,31 +101,27 @@ public extension Client {
 private extension Client {
     
     func send(_ mail: Mail) async throws {
-        guard state == .authenticated else {
-            throw Error.invalidResponse("Cannot send mail before authentication")
-        }
-        
-        try await sendCommand("MAIL FROM:\(mail.sender.formatted())", expecting: [250])
+        try await sendCommand("MAIL FROM:\(mail.sender.formatted(includeName: false))", expecting: [250])
         state = .mailTransaction
         
         var failedRecipientErrors: [Swift.Error] = []
-        for recipient in mail.receivers.all {
+        let recipients = mail.receivers.all + mail.cc.all + mail.bcc.all
+        for recipient in recipients {
             do {
-                try await sendCommand("RCPT TO:\(recipient.formatted())", expecting: [250, 251])
+                try await sendCommand("RCPT TO:\(recipient.formatted(includeName: false))", expecting: [250, 251])
             } catch {
                 failedRecipientErrors.append(error)
             }
         }
         if !failedRecipientErrors.isEmpty {
-            throw Error.invalidResponse("All RCPT TO commands were rejected by server")
+            throw Error.invalidResponse("Some RCPT TO commands were rejected by server")
         }
         
         try await sendCommand("DATA", expecting: [354])
-
-        // Send message data without expecting a response
-        await transport.sendRaw(mail.formatted())
-
-        // End DATA section
+        
+        let mimeData = buildMIMEData(from: mail)
+        await transport.sendRaw(mimeData)
+        
         await transport.sendLine(".")
 
         // Read final server response for DATA
@@ -137,5 +145,9 @@ private extension Client {
         
         print(smtpResponse.description)
         return smtpResponse
+    }
+    
+    func buildMIMEData(from mail: Mail) -> Data {
+        MIMEBuilder.build(mail, date: Date(), messageIDDomain: heloName)
     }
 }
