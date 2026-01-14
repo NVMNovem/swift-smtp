@@ -11,17 +11,17 @@ public struct Text: BodyNode, Attributable {
     public let nodes: [HTMLNode]
 
     public init(_ value: String) {
-        self.attributes = [:]
+        self.attributes = .empty
         self.nodes = [HTMLText(value)]
     }
     
     public init(@TextBuilder _ content: () -> [HTMLNode]) {
-        self.attributes = [:]
+        self.attributes = .empty
         self.nodes = content()
     }
 
     public init(markdown: Markdown) {
-        self.attributes = [:]
+        self.attributes = .empty
         self.nodes = [RawHTML(markdown.render())]
     }
 
