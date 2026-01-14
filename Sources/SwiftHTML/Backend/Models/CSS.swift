@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 13/01/2026.
 //
 
-public struct CSS: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
+public struct CSS: ExpressibleByStringLiteral, ExpressibleByStringInterpolation, ExpressibleByArrayLiteral {
     
     internal let styles: [Style]
     
@@ -20,6 +20,10 @@ public struct CSS: ExpressibleByStringLiteral, ExpressibleByStringInterpolation 
             .filter { !$0.isEmpty }
 
         self.styles = cssStrings.compactMap { Style(css: $0) }
+    }
+    
+    public init(arrayLiteral elements: Style...) {
+        self.styles = elements
     }
     
     public init(stringInterpolation: String) {

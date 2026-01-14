@@ -13,9 +13,9 @@ public enum TextAlignment {
 
     var cssValue: String {
         switch self {
-        case .leading: return "left"
-        case .center: return "center"
-        case .trailing: return "right"
+        case .leading: "left"
+        case .center: "center"
+        case .trailing: "right"
         }
     }
 }

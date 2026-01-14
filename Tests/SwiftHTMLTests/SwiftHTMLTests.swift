@@ -34,18 +34,13 @@ func renderHTML1() async throws {
         Grid(role: .presentation, width: "100%", cellpadding: 0, cellspacing: 0, border: 0) {
             GridRowCell(alignment: .center) {
                 Grid(role: .presentation, width: "100%", cellpadding: 0, cellspacing: 0, border: 0) {
-                    GridRowCell(alignment: .center) {
-                        Grid(role: .presentation, width: "100%", cellpadding: 0, cellspacing: 0, border: 0) {
-                            GridRowCell(alignment: .leading, valign: "middle") {
-                                Image(src: "https://funico.international/_BE/images/layout/Logo_Funico_wit.png", alt: "Funico", width: 120)
-                                    .style("display:block; border:0; outline:none; text-decoration:none; height:auto;")
-                            }
-                        }
-                        .style("border-collapse:collapse; width:\(contentWidth - cardInnerMargin)px; max-width:\(contentWidth - cardInnerMargin)px;")
+                    GridRowCell(alignment: .leading, valign: "middle") {
+                        Image(src: "https://funico.international/_BE/images/layout/Logo_Funico_wit.png", alt: "Funico", width: 120)
+                            .style("display:block; border:0; outline:none; text-decoration:none; height:auto;")
                     }
-                    .style("padding:14px 12px;")
+                    .style([.padding("14px 12px")])
                 }
-                .style("border-collapse:collapse;")
+                .style("border-collapse:collapse; width:\(contentWidth - cardInnerMargin)px; max-width:\(contentWidth - cardInnerMargin)px;")
             }
             .style("background:#2C5573;")
             GridRowCell(alignment: .center) {
@@ -152,9 +147,9 @@ func renderHTML1() async throws {
                 }
                 .style("border-collapse:collapse; width:\(contentWidth)px; max-width:\(contentWidth)px; background:#ffffff; border-bottom-left-radius:\(cardCornerRadius)px; border-bottom-right-radius:\(cardCornerRadius)px; overflow:hidden;")
             }
-            .style("background:#D1DAE0; padding:0 12px 28px 12px;")
+            .style("background:#D1DAE0; padding:0 12px 50px 12px;")
         }
-        .style("border-collapse:collapse; width:100%; background:#D1DAE0;")
+        .style([.borderCollapse("collapse"), .width("100%"), .background("#D1DAE0")])
     } head: {
         Meta(.charset("utf-8"))
         Meta(.name("viewport", content: "width=device-width,initial-scale=1"))
@@ -164,7 +159,7 @@ func renderHTML1() async throws {
         Title("Peppol-facturen")
     }
     .language("en")
-    .style("margin:0; padding:0; background:#D1DAE0;")
+    .style([.margin("0"), .padding("0"), .background("#D1DAE0")])
     
     print("")
     print(doc.render())
@@ -173,11 +168,11 @@ func renderHTML1() async throws {
     let client = Client(
         host: "smtp.office365.com",
         port: 587,
-        heloName: "",
-        authentication: .login(username: "", password: "")
+        heloName: "funico.be",
+        authentication: .login(username: "dvandekauter@funico.be", password: "!PFUbvBB4ddurPWqJUYxa12")
     )
     
-    let mail = Mail(from: "", to: "", subject: "Test htmlbuilder") {
+    let mail = Mail(from: "dvandekauter@funico.be", to: "vdkdamian@gmail.com", subject: "Test htmlbuilder") {
         doc.render()
     }
     
