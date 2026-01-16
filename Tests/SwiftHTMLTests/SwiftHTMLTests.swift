@@ -128,11 +128,12 @@ func renderHTML1() async throws {
                         .style("border-collapse:collapse;")
                         Spacer(height: 20)
                         Text {
-                            "Contacteer ons via "
-                            Link("no-reply@novem.info", destination: "mailto:no-reply@novem.info")
+                            "Heeft u vragen of zijn er onduidelijkheden? Aarzel dan niet om contact met ons op te nemen via "
+                            Link("peppol@funico.be", destination: "peppol@funico.be")
                                 .style("color:#2563eb; text-decoration:underline;")
-                            " of door te bellen."
-                            Text(markdown: "\n Met vriendelijke groet \n Novem")
+                            Text(markdown: " of telefonisch via onze klantendienst. \nWij helpen u graag verder.")
+                                .style("font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;")
+                            Text(markdown: "\n\nMet vriendelijke groet \nNovem")
                                 .style("font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;")
                         }
                         .style("font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;")
