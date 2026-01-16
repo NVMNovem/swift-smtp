@@ -9,6 +9,13 @@ public struct Text: BodyNode, Attributable {
     
     public var attributes: Attributes
     public let nodes: [HTMLNode]
+    
+    internal var display: TextDisplay = .block
+    
+    internal enum TextDisplay {
+        case inline
+        case block
+    }
 
     public init(_ value: String) {
         self.attributes = .empty
@@ -26,7 +33,16 @@ public struct Text: BodyNode, Attributable {
     }
 
     public func render(into output: inout String, indent: Int) {
-        HTMLElement(tag: "div", attributes: attributes, children: nodes).render(into: &output, indent: indent)
+        HTMLElement(tag: tag, attributes: attributes, children: nodes.inlinedText, renderMode: renderMode)
+            .render(into: &output, indent: indent)
+    }
+    
+    private var tag: String {
+        display == .inline ? "span" : "div"
+    }
+    
+    private var renderMode: RenderMode {
+        display == .inline ? .inline : .automatic
     }
 }
 
@@ -78,6 +94,15 @@ public extension Text {
         var copy = self
         let style = "padding-\(edge.cssValue): \(spacing.px)px;"
         copy.attributes["style"] = copy.attributes["style"].appendStyle(style)
+        return copy
+    }
+}
+
+internal extension Text {
+    
+    func inlined() -> Text {
+        var copy = self
+        copy.display = .inline
         return copy
     }
 }

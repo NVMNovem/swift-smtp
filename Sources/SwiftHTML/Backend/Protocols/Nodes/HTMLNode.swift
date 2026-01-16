@@ -21,3 +21,16 @@ public extension HTMLNode {
         return output
     }
 }
+
+internal extension Array where Element == HTMLNode {
+    
+    var inlinedText: [HTMLNode] {
+        map { node -> Element in
+            if let textNode = node as? Text {
+                return textNode.inlined()
+            } else {
+                return node
+            }
+        }
+    }
+}

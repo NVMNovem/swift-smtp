@@ -106,7 +106,7 @@ func renderHTML1() async throws {
                         
                         Spacer(height: 18)
                         Text {
-                            "De details van deze facturen zijn steeds beschikbaar na login op onze website"
+                            "De details van deze facturen zijn steeds beschikbaar na login op onze website "
                             Link("www.novem.com", destination: "www.novem.com")
                                 .style("color:#2563eb; text-decoration:underline;")
                             Text(markdown: ", onder **Novem** > **Profiel**.")
@@ -128,7 +128,7 @@ func renderHTML1() async throws {
                         .style("border-collapse:collapse;")
                         Spacer(height: 20)
                         Text {
-                            "Contacteer ons via"
+                            "Contacteer ons via "
                             Link("no-reply@novem.info", destination: "mailto:no-reply@novem.info")
                                 .style("color:#2563eb; text-decoration:underline;")
                             " of door te bellen."
@@ -168,11 +168,11 @@ func renderHTML1() async throws {
     let client = Client(
         host: "smtp.office365.com",
         port: 587,
-        heloName: "",
-        authentication: .login(username: "", password: "")
+        heloName: "funico.be",
+        authentication: .login(username: "dvandekauter@funico.be", password: "!PFUbvBB4ddurPWqJUYxa12")
     )
     
-    let mail = Mail(from: "", to: "", subject: "Test htmlbuilder") {
+    let mail = Mail(from: "dvandekauter@funico.be", to: "vdkdamian@gmail.com", subject: "Test htmlbuilder") {
         doc.render()
     }
     
