@@ -15,10 +15,7 @@ public extension HTMLNode {
     func render() -> String {
         var output = ""
         render(into: &output, indent: 0)
-        if output.hasSuffix("\n") {
-            output.removeLast()
-        }
-        return output
+        return output.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

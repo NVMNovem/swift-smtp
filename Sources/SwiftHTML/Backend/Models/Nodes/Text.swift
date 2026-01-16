@@ -24,7 +24,7 @@ public struct Text: BodyNode, Attributable {
     
     public init(@TextBuilder _ content: () -> [HTMLNode]) {
         self.attributes = .empty
-        self.nodes = content()
+        self.nodes = content().inlinedText
     }
 
     public init(markdown: Markdown) {
@@ -33,7 +33,7 @@ public struct Text: BodyNode, Attributable {
     }
 
     public func render(into output: inout String, indent: Int) {
-        HTMLElement(tag: tag, attributes: attributes, children: nodes.inlinedText, renderMode: renderMode)
+        HTMLElement(tag: tag, attributes: attributes, children: nodes, renderMode: renderMode)
             .render(into: &output, indent: indent)
     }
     
