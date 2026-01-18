@@ -18,10 +18,6 @@ public enum HTMLBuilder {
         [expression]
     }
     
-    public static func buildExpression(_ expression: String) -> [HTMLNode] {
-        [HTMLText(expression)]
-    }
-    
     public static func buildOptional(_ component: [HTMLNode]?) -> [HTMLNode] {
         component ?? []
     }

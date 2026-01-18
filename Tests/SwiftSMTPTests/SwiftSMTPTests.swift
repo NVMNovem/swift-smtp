@@ -27,12 +27,7 @@ func sendHTML(credentials: SMTPCredentials) async throws {
         <body style="margin:0; padding:0; background:#f6f7fb;">
         <!-- Preheader (hidden preview text in many clients) -->
         <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">
-        This is a test email from Funico. If you can read this, HTML is working.
-        </div>
-        
-        <!-- Gmail iOS/Android spacing hack -->
-        <div style="display:none; white-space:nowrap; font:15px/1px monospace;">
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        This is a test. If you can read this, HTML is working.
         </div>
         
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
@@ -47,7 +42,7 @@ func sendHTML(credentials: SMTPCredentials) async throws {
             <tr>
               <td style="padding:20px 24px; background:#111827;">
                 <div style="font-family:Arial, Helvetica, sans-serif; font-size:18px; line-height:24px; color:#ffffff; font-weight:bold;">
-                  Funico — Test Email
+                  Test Email
                 </div>
                 <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:18px; color:#c7d2fe; margin-top:4px;">
                   HTML rendering + basic layout check
@@ -99,18 +94,13 @@ func sendHTML(credentials: SMTPCredentials) async throws {
             <tr>
               <td style="padding:16px 24px; background:#f3f4f6;">
                 <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#6b7280;">
-                  Sent by Funico • This is a test message.<br />
+                  Sent by Xcode • This is a test message.<br />
                   <span style="color:#9ca3af;">If you received this by accident, you can ignore it.</span>
                 </div>
               </td>
             </tr>
         
           </table>
-        
-          <!-- Small note below -->
-          <div style="font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:16px; color:#9ca3af; margin-top:10px;">
-            Tip: test in Gmail, Outlook, Apple Mail, and a mobile client.
-          </div>
         </td>
         </tr>
         </table>

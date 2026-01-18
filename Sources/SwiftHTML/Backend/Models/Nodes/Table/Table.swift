@@ -8,8 +8,8 @@
 public struct Table<Data: RandomAccessCollection>: BodyNode, Attributable {
     
     public let data: Data
-    public let headerCellStyle: CSS?
-    public let cellStyle: CSS?
+    public let headerCellStyle: [Style]?
+    public let cellStyle: [Style]?
     public let columns: [Column]
     public let rowBuilder: (Data.Element) -> [HTMLNode]
     
@@ -17,8 +17,8 @@ public struct Table<Data: RandomAccessCollection>: BodyNode, Attributable {
 
     public init(
         _ data: Data,
-        headerCellStyle: CSS? = nil,
-        cellStyle: CSS? = nil,
+        headerCellStyle: Style...,
+        cellStyle: Style...,
         @ColumnBuilder columns: () -> [Column],
         @CellBuilder row: @escaping (Data.Element) -> [HTMLNode]
     ) {
@@ -87,5 +87,46 @@ public struct Table<Data: RandomAccessCollection>: BodyNode, Attributable {
         }
         
         table.render(into: &output, indent: indent)
+    }
+}
+
+public extension Table {
+    
+    init(
+        _ data: Data,
+        cellStyle: Style...,
+        @ColumnBuilder columns: () -> [Column],
+        @CellBuilder row: @escaping (Data.Element) -> [HTMLNode]
+    ) {
+        self.data = data
+        self.headerCellStyle = nil
+        self.cellStyle = cellStyle
+        self.columns = columns()
+        self.rowBuilder = row
+    }
+    
+    init(
+        _ data: Data,
+        headerCellStyle: Style...,
+        @ColumnBuilder columns: () -> [Column],
+        @CellBuilder row: @escaping (Data.Element) -> [HTMLNode]
+    ) {
+        self.data = data
+        self.headerCellStyle = headerCellStyle
+        self.cellStyle = nil
+        self.columns = columns()
+        self.rowBuilder = row
+    }
+    
+    init(
+        _ data: Data,
+        @ColumnBuilder columns: () -> [Column],
+        @CellBuilder row: @escaping (Data.Element) -> [HTMLNode]
+    ) {
+        self.data = data
+        self.headerCellStyle = nil
+        self.cellStyle = nil
+        self.columns = columns()
+        self.rowBuilder = row
     }
 }

@@ -15,7 +15,7 @@ public extension HTMLNode {
     func render() -> String {
         var output = ""
         render(into: &output, indent: 0)
-        return output.trimmingCharacters(in: .whitespacesAndNewlines)
+        return output
     }
 }
 

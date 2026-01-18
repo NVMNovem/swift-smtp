@@ -9,6 +9,10 @@ public struct CSS: ExpressibleByStringLiteral, ExpressibleByStringInterpolation,
     
     internal let styles: [Style]
     
+    public init(_ styles: [Style]) {
+        self.styles = styles
+    }
+    
     public init(_ styles: Style...) {
         self.styles = styles
     }

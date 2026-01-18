@@ -21,11 +21,6 @@ public struct Text: BodyNode, Attributable {
         self.attributes = .empty
         self.nodes = [HTMLText(value)]
     }
-    
-    public init(@TextBuilder _ content: () -> [HTMLNode]) {
-        self.attributes = .empty
-        self.nodes = content().inlinedText
-    }
 
     public init(markdown: Markdown) {
         self.attributes = .empty

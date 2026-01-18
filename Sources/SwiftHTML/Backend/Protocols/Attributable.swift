@@ -35,4 +35,16 @@ public extension Attributable {
         copy.attributes["style"] = copy.attributes["style"].appendStyle(css.render())
         return copy
     }
+
+    func style(_ styles: Style...) -> Self {
+        var copy = self
+        copy.attributes["style"] = copy.attributes["style"].appendStyle(CSS(styles).render())
+        return copy
+    }
+
+    func style(_ styles: [Style]) -> Self {
+        var copy = self
+        copy.attributes["style"] = copy.attributes["style"].appendStyle(CSS(styles).render())
+        return copy
+    }
 }
