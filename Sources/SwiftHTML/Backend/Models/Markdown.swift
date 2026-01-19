@@ -5,7 +5,7 @@
 //  Created by Damian Van de Kauter on 08/01/2026.
 //
 
-public struct Markdown: ExpressibleByStringLiteral {
+public struct Markdown: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
     
     internal let value: String
     
@@ -15,6 +15,10 @@ public struct Markdown: ExpressibleByStringLiteral {
     
     public init(stringLiteral value: String) {
         self.value = value
+    }
+    
+    public init(stringInterpolation: String) {
+        self.init(stringLiteral: stringInterpolation)
     }
 }
 
