@@ -27,6 +27,7 @@ let package = Package(
         .target(
             name: "SwiftSMTP",
             dependencies: [
+                "SwiftHTML",
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "NIOExtras", package: "swift-nio-extras")
@@ -34,7 +35,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SwiftSMTPTests",
-            dependencies: ["SwiftSMTP"]
+            dependencies: ["SwiftSMTP", "SwiftHTML"]
         ),
         .target(
             name: "SwiftHTML",

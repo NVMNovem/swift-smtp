@@ -1,5 +1,5 @@
 {
-  "originHash" : "24fef98671b1095e7c11bc0a6663a1bac31137362c65af67489d113a04d84a42",
+  "originHash" : "2348f6aff4d282142f77defd102148c073238b2920627eef9057be4e5d6d8aae",
   "pins" : [
     {
       "identity" : "swift-algorithms",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-asn1.git",
       "state" : {
-        "revision" : "40d25bbb2fc5b557a9aa8512210bded327c0f60d",
-        "version" : "1.5.0"
+        "revision" : "810496cf121e525d660cd0ea89a758740476b85f",
+        "version" : "1.5.1"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-async-algorithms.git",
       "state" : {
-        "revision" : "2773d4125311133a2f705ec374c363a935069d45",
-        "version" : "1.1.0"
+        "revision" : "6c050d5ef8e1aa6342528460db614e9770d7f804",
+        "version" : "1.1.1"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-certificates.git",
       "state" : {
-        "revision" : "66a8512c4e7466582bab21e0e0c333f01974e5b6",
-        "version" : "1.16.0"
+        "revision" : "7d5f6124c91a2d06fb63a811695a3400d15a100e",
+        "version" : "1.17.1"
       }
     },
     {
@@ -85,19 +85,19 @@
     {
       "identity" : "swift-log",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-log",
+      "location" : "https://github.com/apple/swift-log.git",
       "state" : {
-        "revision" : "ce592ae52f982c847a4efc0dd881cc9eb32d29f2",
-        "version" : "1.6.4"
+        "revision" : "7ee16e465622412764b0ff0c1301801dc71b8f61",
+        "version" : "1.9.0"
       }
     },
     {
       "identity" : "swift-nio",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-nio.git",
+      "location" : "https://github.com/apple/swift-nio",
       "state" : {
-        "revision" : "3eea09220e07d34ace722221cbda90306f48c86c",
-        "version" : "2.90.1"
+        "revision" : "4a9a97111099376854a7f8f0f9f88b9d61f52eff",
+        "version" : "2.92.2"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-extras",
       "state" : {
-        "revision" : "7ee281d816fa8e5f3967a2c294035a318ea551c7",
-        "version" : "1.31.0"
+        "revision" : "f4ea23b6c1c545a6656dbcac8c82a2864075766e",
+        "version" : "1.31.3"
       }
     },
     {
@@ -150,8 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-system.git",
       "state" : {
-        "revision" : "395a77f0aa927f0ff73941d7ac35f2b46d47c9db",
-        "version" : "1.6.3"
+        "revision" : "7c6ad0fc39d0763e0b699210e4124afd5041c5df",
+        "version" : "1.6.4"
       }
     }
   ],
