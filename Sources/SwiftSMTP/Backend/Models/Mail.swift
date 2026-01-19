@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftHTML
 
 /// Represents an email message, including sender, recipient, subject, and body.
 ///
@@ -79,61 +80,61 @@ public extension Mail {
     
     init(
         from sender: Contact, to receiver: Contact, cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, text: String
+        attachments: [Attachment] = [], subject: String, text: () -> String
     ) {
         self.init(
             from: sender, to: .single(receiver), cc: cc, bcc: bcc, replyTo: replyTo,
-            attachments: attachments, subject: subject, body: .plain(text)
+            attachments: attachments, subject: subject, body: .plain(text())
         )
     }
     
     init(
         from sender: Contact, to receiver: Contact, cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, html: () -> String
+        attachments: [Attachment] = [], subject: String, html: () -> HTMLDocument
     ) {
         self.init(
             from: sender, to: .single(receiver), cc: cc, bcc: bcc, replyTo: replyTo,
-            attachments: attachments, subject: subject, body: .html(html())
+            attachments: attachments, subject: subject, body: .html(html().render())
         )
     }
     
     init(
         from sender: Contact, to receivers: Contact..., cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, text: String
+        attachments: [Attachment] = [], subject: String, text: () -> String
     ) {
         self.init(
             from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
-            attachments: attachments, subject: subject, body: .plain(text)
+            attachments: attachments, subject: subject, body: .plain(text())
         )
     }
     
     init(
         from sender: Contact, to receivers: Contact..., cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, html: () -> String
+        attachments: [Attachment] = [], subject: String, html: () -> HTMLDocument
     ) {
         self.init(
             from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
-            attachments: attachments, subject: subject, body: .html(html())
+            attachments: attachments, subject: subject, body: .html(html().render())
         )
     }
     
     init(
         from sender: Contact, to receivers: [Contact], cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, text: String
+        attachments: [Attachment] = [], subject: String, text: () -> String
     ) {
         self.init(
             from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
-            attachments: attachments, subject: subject, body: .plain(text)
+            attachments: attachments, subject: subject, body: .plain(text())
         )
     }
     
     init(
         from sender: Contact, to receivers: [Contact], cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, html: () -> String
+        attachments: [Attachment] = [], subject: String, html: () -> HTMLDocument
     ) {
         self.init(
             from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
-            attachments: attachments, subject: subject, body: .html(html())
+            attachments: attachments, subject: subject, body: .html(html().render())
         )
     }
 }
