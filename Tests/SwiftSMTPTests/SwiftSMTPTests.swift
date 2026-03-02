@@ -126,7 +126,9 @@ func sendText(credentials: SMTPCredentials) async throws {
         authentication: .login(credentials)
     )
     
-    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "Test text", text: "Dit is standaard text")
+    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "Test text") {
+        "Dit is standaard text"
+    }
     
     do {
         try await client.send(mail)

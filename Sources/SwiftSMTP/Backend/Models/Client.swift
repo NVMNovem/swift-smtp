@@ -88,47 +88,65 @@ public extension Client {
             throw Error.invalidResponse("Cannot send mail before authentication")
         }
         
+        var failures: [SendFailure] = []
         for mail in mails {
-            try await send(mail)
+            do {
+                failures.append(contentsOf: try await send(mail))
+            } catch {
+                let recipients = mail.receivers.all + mail.cc.all + mail.bcc.all
+                failures.append(contentsOf: recipients.map { SendFailure(recipient: $0, error: error) })
+            }
         }
         
         try await sendCommand("QUIT", expecting: [221])
         await transport.close()
         state = .disconnected
+
+        if !failures.isEmpty {
+            throw Error.sendFailures(failures)
+        }
     }
 }
 
 private extension Client {
     
-    func send(_ mail: Mail) async throws {
+    func send(_ mail: Mail) async throws -> [SendFailure] {
         try await sendCommand("MAIL FROM:\(mail.sender.formatted(includeName: false))", expecting: [250])
         state = .mailTransaction
         
-        var failedRecipientErrors: [Swift.Error] = []
+        var failures: [SendFailure] = []
+        var acceptedRecipients: [Mail.Contact] = []
         let recipients = mail.receivers.all + mail.cc.all + mail.bcc.all
         for recipient in recipients {
             do {
                 try await sendCommand("RCPT TO:\(recipient.formatted(includeName: false))", expecting: [250, 251])
+                acceptedRecipients.append(recipient)
             } catch {
-                failedRecipientErrors.append(error)
+                failures.append(SendFailure(recipient: recipient, error: error))
             }
         }
-        if !failedRecipientErrors.isEmpty {
-            throw Error.invalidResponse("Some RCPT TO commands were rejected by server")
+        if acceptedRecipients.isEmpty {
+            return failures
         }
         
-        try await sendCommand("DATA", expecting: [354])
-        
-        let mimeData = buildMIMEData(from: mail)
-        await transport.sendRaw(mimeData)
-        
-        await transport.sendLine(".")
+        do {
+            try await sendCommand("DATA", expecting: [354])
+            
+            let mimeData = buildMIMEData(from: mail)
+            await transport.sendRaw(mimeData)
+            
+            await transport.sendLine(".")
 
-        // Read final server response for DATA
-        let response = try await transport.readResponse()
-        guard response.code == 250 else {
-            throw Error.invalidResponse(response.lines.joined(separator: "\n"))
+            // Read final server response for DATA
+            let response = try await transport.readResponse()
+            guard response.code == 250 else {
+                throw Error.invalidResponse(response.lines.joined(separator: "\n"))
+            }
+        } catch {
+            failures.append(contentsOf: acceptedRecipients.map { SendFailure(recipient: $0, error: error) })
         }
+
+        return failures
     }
     
     @discardableResult
