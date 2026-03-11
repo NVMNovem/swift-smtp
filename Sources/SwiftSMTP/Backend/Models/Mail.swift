@@ -80,7 +80,7 @@ public extension Mail {
     
     init(
         from sender: Contact, to receivers: Contact..., cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, text: () -> String
+        attachments: [Attachment] = [], subject: String, text: @autoclosure () -> String
     ) {
         self.init(
             from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,
@@ -100,7 +100,7 @@ public extension Mail {
     
     init(
         from sender: Contact, to receivers: [Contact], cc: Receivers? = nil, bcc: Receivers? = nil, replyTo: Contact? = nil,
-        attachments: [Attachment] = [], subject: String, text: () -> String
+        attachments: [Attachment] = [], subject: String, text: @autoclosure () -> String
     ) {
         self.init(
             from: sender, to: .multiple(receivers), cc: cc, bcc: bcc, replyTo: replyTo,

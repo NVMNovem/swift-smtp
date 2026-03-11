@@ -1,6 +1,8 @@
 import Testing
 import Foundation
+
 @testable import SwiftSMTP
+import SwiftHTML
 
 @Test(arguments: [SMTPCredentials(username: "", password: "")])
 func sendHTML(credentials: SMTPCredentials) async throws {
@@ -11,103 +13,58 @@ func sendHTML(credentials: SMTPCredentials) async throws {
         authentication: .login(credentials)
     )
     
-    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "Test html") {
-        """
-        <!doctype html>
-        <html lang="en">
-        <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <meta name="x-apple-disable-message-reformatting" />
-        <meta name="color-scheme" content="light dark" />
-        <meta name="supported-color-schemes" content="light dark" />
-        <title>Test Email</title>
-        </head>
-        
-        <body style="margin:0; padding:0; background:#f6f7fb;">
-        <!-- Preheader (hidden preview text in many clients) -->
-        <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">
-        This is a test. If you can read this, HTML is working.
-        </div>
-        
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-        style="border-collapse:collapse; background:#f6f7fb;">
-        <tr>
-        <td align="center" style="padding:24px 12px;">
-          <!-- Container -->
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"
-            style="width:600px; max-width:600px; border-collapse:collapse; background:#ffffff; border-radius:12px; overflow:hidden;">
-            
-            <!-- Header -->
-            <tr>
-              <td style="padding:20px 24px; background:#111827;">
-                <div style="font-family:Arial, Helvetica, sans-serif; font-size:18px; line-height:24px; color:#ffffff; font-weight:bold;">
-                  Test Email
-                </div>
-                <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:18px; color:#c7d2fe; margin-top:4px;">
-                  HTML rendering + basic layout check
-                </div>
-              </td>
-            </tr>
-        
-            <!-- Body -->
-            <tr>
-              <td style="padding:24px;">
-                <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;">
-                  Hi,<br /><br />
-                  This is a simple HTML email for testing. It includes:
-                  <ul style="margin:12px 0 0 20px; padding:0;">
-                    <li>Inline styles (best compatibility)</li>
-                    <li>Table layout (works in Outlook)</li>
-                    <li>A button and a few text styles</li>
-                  </ul>
-                </div>
-        
-                <div style="height:18px; line-height:18px;">&nbsp;</div>
-        
-                <!-- Button -->
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-                  <tr>
-                    <td align="center" bgcolor="#2563eb" style="border-radius:10px;">
-                      <a href="https://example.com"
-                         style="display:inline-block; padding:12px 16px; font-family:Arial, Helvetica, sans-serif;
-                                font-size:15px; line-height:18px; color:#ffffff; text-decoration:none; font-weight:bold;">
-                        Open Example
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-        
-                <div style="height:18px; line-height:18px;">&nbsp;</div>
-        
-                <div style="font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; color:#374151;">
-                  If the button doesn’t work, copy &amp; paste this link:
-                  <br />
-                  <a href="https://example.com" style="color:#2563eb; text-decoration:underline;">
-                    https://example.com
-                  </a>
-                </div>
-              </td>
-            </tr>
-        
-            <!-- Footer -->
-            <tr>
-              <td style="padding:16px 24px; background:#f3f4f6;">
-                <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#6b7280;">
-                  Sent by Xcode • This is a test message.<br />
-                  <span style="color:#9ca3af;">If you received this by accident, you can ignore it.</span>
-                </div>
-              </td>
-            </tr>
-        
-          </table>
-        </td>
-        </tr>
-        </table>
-        </body>
-        </html>
-        """
+    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "[SwiftHTML] Test mail") {
+        HTMLDocument {
+            Grid(role: .presentation, width: "100%", cellpadding: 0, cellspacing: 0, border: 0) {
+                GridRowCell(alignment: .center) {
+                    Grid(role: .presentation, width: "100%", cellpadding: 0, cellspacing: 0, border: 0) {
+                        GridRowCell(height: 24) {
+                            RawHTML("&nbsp;")
+                        }
+                        .style(.height("\(24)px"), .lineHeight("22px"), .fontSize("22px"), .background("#ffffff"), .borderTopLeftRadius("\(15)px"), .borderTopRightRadius("\(15)px"))
+                    }
+                    .style(.borderCollapse("collapse"), .width("\(600)px"), .maxWidth("\(600)px"))
+                }
+                .style(.background("#ABBBC7"), .padding("0 12px"))
+                GridRowCell(alignment: .center) {
+                    Grid(role: .presentation, width: "100%", cellpadding: 0, cellspacing: 0, border: 0) {
+                        GridRowCell {
+                            Text("This is an HTML mail.")
+                                .style(.fontFamily("Arial, Helvetica, sans-serif"), .fontSize("16px"), .lineHeight("24px"), .color("#111827"))
+                            Spacer(height: 16)
+                            Grid(role: .presentation, width: "100%", cellpadding: 0, cellspacing: 0, border: 0) {
+                                GridRowCell(alignment: .center) {
+                                    Grid(role: .presentation, cellpadding: 0, cellspacing: 0, border: 0) {
+                                        GridRowCell {
+                                            Text(markdown: "**This is a test** Please ignore this mail.")
+                                                .style(.fontFamily("Arial, Helvetica, sans-serif"), .fontSize("14px"), .lineHeight("20px"), .color("#7c2d12"))
+                                        }
+                                        .style(.padding("12px 12px"))
+                                    }
+                                    .style(.border("1px solid #fcd9b6"), .borderRadius("10px"), .background("#fffbf7"))
+                                }
+                            }
+                            GridRowCell {
+                                Text("This is an automated mail.")
+                                    .style(.fontFamily("Arial, Helvetica, sans-serif"), .fontSize("12px"), .lineHeight("18px"), .color("#6b7280"))
+                            }
+                            .style(.padding("16px 24px"), .background("#f3f4f6"))
+                        }
+                        .style(.padding("0px 20px 20px 20px;"))
+                    }
+                    .style(.borderCollapse("collapse"), .width("\(600)px"), .maxWidth("\(600)px"), .background("#ffffff"), .borderBottomLeftRadius("\(15)px"), .borderBottomRightRadius("\(15)px"), .overflow("hidden"))
+                }
+                .style(.background("#D1DAE0"), .padding("0 12px 50px 12px"))
+            }
+            .style(.borderCollapse("collapse"), .width("100%"), .background("#D1DAE0"))
+        } head: {
+            Meta(.charset("utf-8"))
+            Meta(.name("viewport", content: "width=device-width,initial-scale=1"))
+            Title("SwiftHTML")
         }
+        .language("en")
+        .style(.margin("0"), .padding("0"), .background("#D1DAE0"))
+    }
     
     do {
         try await client.send(mail)
@@ -126,9 +83,7 @@ func sendText(credentials: SMTPCredentials) async throws {
         authentication: .login(credentials)
     )
     
-    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "Test text") {
-        "Dit is standaard text"
-    }
+    let mail = Mail(from: Mail.Contact(email: credentials.username), to: "", subject: "[SwiftHTML] Test mail", text: "Dit is standaard text")
     
     do {
         try await client.send(mail)
