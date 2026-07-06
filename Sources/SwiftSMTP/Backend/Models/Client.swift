@@ -41,66 +41,72 @@ public extension Client {
     func send(_ mails: [Mail]) async throws {
         try await transport.connect()
         state = .connected
-        
-        let ehlo = try await sendCommand("EHLO \(heloName)", expecting: [250])
-        capabilities = SMTPCapabilities(from: ehlo)
-        state = .greeted
-        
-        if authentication.requiresTLS {
-            guard capabilities.supportsStartTLS else {
-                throw Error.invalidResponse("Server does not support STARTTLS")
-            }
-            
-            try await sendCommand("STARTTLS", expecting: [220])
-            try await transport.startTLS()
-            state = .tlsEstablished
-            
-            let ehloTLS = try await sendCommand("EHLO \(heloName)", expecting: [250])
-            capabilities = SMTPCapabilities(from: ehloTLS)
-        }
-        
-        switch authentication {
-        case .none:
-            state = .authenticated
-            
-        case .login(let credentials):
-            guard capabilities.authMechanisms.contains(.login) else {
-                throw Error.invalidResponse("AUTH LOGIN not supported")
-            }
-            try await transport.authenticateLogin(
-                username: credentials.username,
-                password: credentials.password
-            )
-            state = .authenticated
-            
-        case .plain(let credentials):
-            guard capabilities.authMechanisms.contains(.plain) else {
-                throw Error.invalidResponse("AUTH PLAIN not supported")
-            }
-            try await transport.authenticatePlain(credentials)
-            state = .authenticated
-            
-        case .xoauth2:
-            throw Error.invalidResponse("XOAUTH2 not implemented")
-        }
-        
-        guard state == .authenticated else {
-            throw Error.invalidResponse("Cannot send mail before authentication")
-        }
-        
+
         var failures: [SendFailure] = []
-        for mail in mails {
-            do {
-                failures.append(contentsOf: try await send(mail))
-            } catch {
-                let recipients = mail.receivers.all + mail.cc.all + mail.bcc.all
-                failures.append(contentsOf: recipients.map { SendFailure(recipient: $0, error: error) })
+        do {
+            let ehlo = try await sendCommand("EHLO \(heloName)", expecting: [250])
+            capabilities = SMTPCapabilities(from: ehlo)
+            state = .greeted
+
+            if authentication.requiresTLS {
+                guard capabilities.supportsStartTLS else {
+                    throw Error.invalidResponse("Server does not support STARTTLS")
+                }
+
+                try await sendCommand("STARTTLS", expecting: [220])
+                try await transport.startTLS()
+                state = .tlsEstablished
+
+                let ehloTLS = try await sendCommand("EHLO \(heloName)", expecting: [250])
+                capabilities = SMTPCapabilities(from: ehloTLS)
             }
+
+            switch authentication {
+            case .none:
+                state = .authenticated
+
+            case .login(let credentials):
+                guard capabilities.authMechanisms.contains(.login) else {
+                    throw Error.invalidResponse("AUTH LOGIN not supported")
+                }
+                try await transport.authenticateLogin(
+                    username: credentials.username,
+                    password: credentials.password
+                )
+                state = .authenticated
+
+            case .plain(let credentials):
+                guard capabilities.authMechanisms.contains(.plain) else {
+                    throw Error.invalidResponse("AUTH PLAIN not supported")
+                }
+                try await transport.authenticatePlain(credentials)
+                state = .authenticated
+
+            case .xoauth2:
+                throw Error.invalidResponse("XOAUTH2 not implemented")
+            }
+
+            guard state == .authenticated else {
+                throw Error.invalidResponse("Cannot send mail before authentication")
+            }
+
+            for mail in mails {
+                do {
+                    failures.append(contentsOf: try await send(mail))
+                } catch {
+                    let recipients = mail.receivers.all + mail.cc.all + mail.bcc.all
+                    failures.append(contentsOf: recipients.map { SendFailure(recipient: $0, error: error) })
+                }
+            }
+
+            try await sendCommand("QUIT", expecting: [221])
+            await transport.close()
+            state = .disconnected
+        } catch {
+            await transport.close()
+            state = .disconnected
+            throw error
         }
-        
-        try await sendCommand("QUIT", expecting: [221])
-        await transport.close()
-        state = .disconnected
 
         if !failures.isEmpty {
             throw Error.sendFailures(failures)
@@ -133,9 +139,7 @@ private extension Client {
             try await sendCommand("DATA", expecting: [354])
             
             let mimeData = buildMIMEData(from: mail)
-            await transport.sendRaw(mimeData)
-            
-            await transport.sendLine(".")
+            try await sendMessageData(mimeData)
 
             // Read final server response for DATA
             let response = try await transport.readResponse()
@@ -167,5 +171,66 @@ private extension Client {
     
     func buildMIMEData(from mail: Mail) -> Data {
         MIMEBuilder.build(mail, date: Date(), messageIDDomain: heloName)
+    }
+
+    func sendMessageData(_ data: Data) async throws {
+        await transport.sendRaw(Self.smtpDATAContent(from: data))
+        await transport.sendLine(".")
+    }
+}
+
+extension Client {
+
+    static func smtpDATAContent(from data: Data) -> Data {
+        let carriageReturn: UInt8 = 13
+        let lineFeed: UInt8 = 10
+        let dot: UInt8 = 46
+
+        var output = Data()
+        output.reserveCapacity(data.count + 2)
+
+        var isAtStartOfLine = true
+        var index = data.startIndex
+
+        func appendCRLF() {
+            output.append(carriageReturn)
+            output.append(lineFeed)
+            isAtStartOfLine = true
+        }
+
+        while index < data.endIndex {
+            let byte = data[index]
+
+            switch byte {
+            case carriageReturn:
+                appendCRLF()
+
+                let nextIndex = data.index(after: index)
+                if nextIndex < data.endIndex, data[nextIndex] == lineFeed {
+                    index = data.index(after: nextIndex)
+                } else {
+                    index = nextIndex
+                }
+
+            case lineFeed:
+                appendCRLF()
+                index = data.index(after: index)
+
+            default:
+                if isAtStartOfLine, byte == dot {
+                    output.append(dot)
+                }
+
+                output.append(byte)
+                isAtStartOfLine = false
+                index = data.index(after: index)
+            }
+        }
+
+        if !data.isEmpty, !isAtStartOfLine {
+            appendCRLF()
+        }
+
+        return output
     }
 }
