@@ -4,6 +4,54 @@ import Foundation
 @testable import SwiftSMTP
 import SwiftHTML
 
+@Test
+func smtpDATAContentWithoutTrailingNewlineUsesStandaloneTerminator() {
+    let wire = smtpDATAWire("Subject: Test\r\n\r\nHello")
+
+    #expect(wire == "Subject: Test\r\n\r\nHello\r\n.\r\n")
+    #expect(wire.hasSuffix("\r\n.\r\n"))
+}
+
+@Test
+func smtpDATAContentEndingInLineFeedUsesSingleCRLFTerminatorBoundary() {
+    let wire = smtpDATAWire("Subject: Test\n\nHello\n")
+
+    #expect(wire == "Subject: Test\r\n\r\nHello\r\n.\r\n")
+    #expect(wire.hasSuffix("\r\n.\r\n"))
+}
+
+@Test
+func smtpDATAContentEndingInCRLFUsesSingleCRLFTerminatorBoundary() {
+    let wire = smtpDATAWire("Subject: Test\r\n\r\nHello\r\n")
+
+    #expect(wire == "Subject: Test\r\n\r\nHello\r\n.\r\n")
+    #expect(wire.hasSuffix("\r\n.\r\n"))
+}
+
+@Test
+func smtpDATAContentNormalizesMixedLineEndings() {
+    let wire = smtpDATAWire("Line 1\rLine 2\nLine 3\r\nLine 4")
+
+    #expect(wire == "Line 1\r\nLine 2\r\nLine 3\r\nLine 4\r\n.\r\n")
+}
+
+@Test
+func smtpDATAContentDotStuffsLinesStartingWithDot() {
+    let wire = smtpDATAWire(".hello\n.\nnormal\n..already")
+
+    #expect(wire == "..hello\r\n..\r\nnormal\r\n...already\r\n.\r\n")
+}
+
+@Test
+func smtpDATAContentCanBeSentForMultipleMailsInSequence() {
+    let firstWire = smtpDATAWire("First message")
+    let secondWire = smtpDATAWire(".Second message")
+
+    #expect(firstWire + secondWire == "First message\r\n.\r\n..Second message\r\n.\r\n")
+    #expect(firstWire.hasSuffix("\r\n.\r\n"))
+    #expect(secondWire.hasSuffix("\r\n.\r\n"))
+}
+
 @Test(arguments: [SMTPCredentials(username: "", password: "")])
 func sendHTML(credentials: SMTPCredentials) async throws {
     let client = Client(
@@ -96,4 +144,11 @@ func sendText(credentials: SMTPCredentials) async throws {
 fileprivate func domain(from email: String) -> String? {
     guard let atIndex = email.lastIndex(of: "@") else { return nil }
     return String(email[email.index(after: atIndex)...])
+}
+
+private func smtpDATAWire(_ string: String) -> String {
+    var data = Client.smtpDATAContent(from: Data(string.utf8))
+    data.append(contentsOf: Data(".\r\n".utf8))
+
+    return String(decoding: data, as: UTF8.self)
 }
