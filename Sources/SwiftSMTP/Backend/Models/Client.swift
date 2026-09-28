@@ -20,13 +20,24 @@ public final class Client {
     }
     private var capabilities = SMTPCapabilities()
     
+    /// - Parameters:
+    ///   - connectTimeout: How long to wait for the TCP connection to be established.
+    ///   - responseTimeout: How long to wait for each server reply. When exceeded, the connection is
+    ///     dropped and `send` throws instead of waiting forever. The default follows the RFC 5321 minimums.
     public init(
         host: String,
         port: Int,
         heloName: String = "localhost",
-        authentication: SMTPAuthenticationPolicy = .none
+        authentication: SMTPAuthenticationPolicy = .none,
+        connectTimeout: Duration = .seconds(30),
+        responseTimeout: Duration = .seconds(300)
     ) {
-        self.transport = Transport(host: host, port: port)
+        self.transport = Transport(
+            host: host,
+            port: port,
+            connectTimeout: connectTimeout,
+            responseTimeout: responseTimeout
+        )
         self.heloName = heloName
         self.authentication = authentication
     }
@@ -39,11 +50,11 @@ public extension Client {
     }
     
     func send(_ mails: [Mail]) async throws {
-        try await transport.connect()
-        state = .connected
-
         var failures: [SendFailure] = []
         do {
+            try await transport.connect()
+            state = .connected
+
             let ehlo = try await sendCommand("EHLO \(heloName)", expecting: [250])
             capabilities = SMTPCapabilities(from: ehlo)
             state = .greeted
@@ -91,6 +102,8 @@ public extension Client {
             }
 
             for mail in mails {
+                // Once the connection is gone, every remaining mail would fail too; stop here.
+                try await transport.ensureOpen()
                 do {
                     failures.append(contentsOf: try await send(mail))
                 } catch {

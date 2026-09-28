@@ -35,7 +35,12 @@ let package = Package(
         ),
         .testTarget(
             name: "SwiftSMTPTests",
-            dependencies: ["SwiftSMTP", "SwiftHTML"]
+            dependencies: [
+                "SwiftSMTP",
+                "SwiftHTML",
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOExtras", package: "swift-nio-extras")
+            ]
         ),
         .target(
             name: "SwiftHTML",
