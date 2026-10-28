@@ -211,15 +211,24 @@ extension Transport {
     func authenticateLogin(username: String, password: String) async throws {
         sendLine("AUTH LOGIN")
         let r1 = try await readResponse()
-        guard r1.code == 334 else { throw Error.authenticationFailed }
+        guard r1.code == 334 else {
+            throw SMTPAuthenticationError(mechanism: .login, stage: .initialCommand,
+                                          response: r1, username: username, password: password)
+        }
 
         sendLine(Data(username.utf8).base64EncodedString())
         let r2 = try await readResponse()
-        guard r2.code == 334 else { throw Error.authenticationFailed }
+        guard r2.code == 334 else {
+            throw SMTPAuthenticationError(mechanism: .login, stage: .usernameChallenge,
+                                          response: r2, username: username, password: password)
+        }
 
         sendLine(Data(password.utf8).base64EncodedString())
         let r3 = try await readResponse()
-        guard r3.code == 235 else { throw Error.authenticationFailed }
+        guard r3.code == 235 else {
+            throw SMTPAuthenticationError(mechanism: .login, stage: .credentialsVerification,
+                                          response: r3, username: username, password: password)
+        }
     }
 
     func authenticatePlain(_ credentials: SMTPCredentials) async throws {
@@ -229,7 +238,8 @@ extension Transport {
         sendLine("AUTH PLAIN \(payload)")
         let response = try await readResponse()
         guard response.code == 235 else {
-            throw Error.authenticationFailed
+            throw SMTPAuthenticationError(mechanism: .plain, stage: .credentialsVerification,
+                                          response: response, username: credentials.username, password: credentials.password)
         }
     }
 }

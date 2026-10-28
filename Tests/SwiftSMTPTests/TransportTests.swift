@@ -79,6 +79,162 @@ func readResponseKeepsMultilineRepliesInOrder() async throws {
     }
 }
 
+@Test(arguments: [0, 1, 2, 3])
+func authenticationRejectionPreservesDiagnostics(step: Int) async throws {
+    let username = "fake-user@example.test"
+    let password = "fake-password-ONLY"
+    let userPayload = Data(username.utf8).base64EncodedString()
+    let server = try await FakeSMTPServer.start { context, line in
+        guard let line else {
+            context.writeLine("220 fake ESMTP")
+            return
+        }
+        if (step == 0 && line == "AUTH LOGIN") ||
+            (step == 1 && line == userPayload) ||
+            (step == 2 && line == Data(password.utf8).base64EncodedString()) || step == 3 {
+            context.writeLine("535-5.7.8 Authentication failed")
+            context.writeLine("535 5.7.8 Invalid credentials")
+        } else {
+            context.writeLine("334 challenge")
+        }
+    }
+    defer { server.stop() }
+    let transport = Transport(host: "127.0.0.1", port: server.port, connectTimeout: .seconds(5), responseTimeout: .seconds(5))
+    try await transport.connect()
+    do {
+        if step == 3 {
+            try await transport.authenticatePlain(SMTPCredentials(username: username, password: password))
+        } else {
+            try await transport.authenticateLogin(username: username, password: password)
+        }
+        Issue.record("Expected authentication rejection")
+    } catch let error as SMTPAuthenticationError {
+        #expect(error.mechanism == (step == 3 ? .plain : .login))
+        let stages: [SMTPAuthenticationError.Stage] = [.initialCommand, .usernameChallenge, .credentialsVerification, .credentialsVerification]
+        #expect(error.stage == stages[step])
+        #expect(error.responseCode == 535)
+        #expect(error.enhancedStatusCode == "5.7.8")
+        #expect(error.responseText.contains("Authentication failed"))
+        #expect(error.responseText.contains("Invalid credentials"))
+        #expect(String(describing: error).contains(error.mechanism.rawValue))
+        #expect(error.localizedDescription.contains(error.stage.rawValue))
+        #expect(error.localizedDescription.contains("535 (5.7.8)"))
+        #expect(error.localizedDescription == String(describing: error))
+    } catch {
+        await transport.close()
+        throw error
+    }
+    await transport.close()
+}
+
+@Test(arguments: [false, true])
+func authenticationRedactsUntrustedReplies(plain: Bool) async throws {
+    let username = "fake-user@example.test"
+    let password = "fake-password-ONLY"
+    let payload = Data("\u{0}\(username)\u{0}\(password)".utf8).base64EncodedString()
+    let server = try await FakeSMTPServer.start { context, line in
+        guard let line else {
+            context.writeLine("220 fake ESMTP")
+            return
+        }
+        context.writeLine("535-5.7.8 Invalid credentials \(username) \(password) \(Data(password.utf8).base64EncodedString()) \(payload)")
+        context.writeLine("535-\(Data(username.utf8).base64EncodedString()) \(payload.replacingOccurrences(of: "=", with: ""))")
+        context.writeLine("535-AUTH PLAIN \(payload)")
+        context.writeLine("535-AUTH LOGIN")
+        context.writeLine("535-\(line)")
+        context.writeLine("535-unknown-token-value secret@example.test \u{1B}[31m\u{0} \u{202E}danger")
+        context.writeLine("535 " + String(repeating: "Invalid credentials ", count: 100))
+    }
+    defer { server.stop() }
+    let transport = Transport(host: "127.0.0.1", port: server.port, connectTimeout: .seconds(5), responseTimeout: .seconds(5))
+    try await transport.connect()
+    do {
+        if plain {
+            try await transport.authenticatePlain(SMTPCredentials(username: username, password: password))
+        } else {
+            try await transport.authenticateLogin(username: username, password: password)
+        }
+        Issue.record("Expected authentication rejection")
+    } catch let error as SMTPAuthenticationError {
+        #expect(error.responseText.utf8.count <= 512)
+        #expect(error.responseText.hasSuffix("..."))
+        #expect(error.responseText.contains("[redacted]"))
+        #expect(error.responseText.unicodeScalars.allSatisfy { (32...126).contains($0.value) })
+        for secret in [username, password, payload, payload.replacingOccurrences(of: "=", with: ""), Data(username.utf8).base64EncodedString(), Data(password.utf8).base64EncodedString(), "AUTH LOGIN", "AUTH PLAIN", "unknown-token-value", "secret@example.test"] {
+            #expect(!error.responseText.contains(secret))
+            #expect(!String(describing: error).contains(secret))
+            #expect(!error.localizedDescription.contains(secret))
+            #expect(!String(reflecting: error).contains(secret))
+        }
+    } catch {
+        await transport.close()
+        throw error
+    }
+    await transport.close()
+}
+
+@Test(arguments: [false, true])
+func authenticationSuccessKeepsWireExchange(plain: Bool) async throws {
+    let username = "local-user"
+    let password = "local-password"
+    let payload = Data("\u{0}\(username)\u{0}\(password)".utf8).base64EncodedString()
+    let server = try await FakeSMTPServer.start { context, line in
+        switch line {
+        case nil: context.writeLine("220 fake ESMTP")
+        case "AUTH LOGIN": context.writeLine("334 VXNlcm5hbWU6")
+        case Data(username.utf8).base64EncodedString(): context.writeLine("334 UGFzc3dvcmQ6")
+        case Data(password.utf8).base64EncodedString(), "AUTH PLAIN \(payload)": context.writeLine("235 2.7.0 Authentication successful")
+        case "NOOP": context.writeLine("250 OK")
+        default: context.writeLine("500 Unexpected command")
+        }
+    }
+    defer { server.stop() }
+    let transport = Transport(host: "127.0.0.1", port: server.port, connectTimeout: .seconds(5), responseTimeout: .seconds(5))
+    try await transport.connect()
+    do {
+        if plain {
+            try await transport.authenticatePlain(SMTPCredentials(username: username, password: password))
+        } else {
+            try await transport.authenticateLogin(username: username, password: password)
+        }
+        await transport.sendLine("NOOP")
+        let response = try await transport.readResponse()
+        #expect(response.code == 250)
+    } catch {
+        await transport.close()
+        throw error
+    }
+    await transport.close()
+}
+
+@Test(arguments: ["454 Temporary authentication failure", "535 5.7.999 Invalid credentials", "535 Invalid credentials 5.7.8", "535 5.7.9999 Invalid credentials"])
+func authenticationEnhancedStatusParsing(reply: String) {
+    let error = SMTPAuthenticationError(mechanism: .login, stage: .initialCommand,
+                                       response: (Int(reply.prefix(3))!, [reply]), username: "fake-user", password: "fake-password")
+    #expect(error.responseCode == Int(reply.prefix(3)))
+    #expect(error.enhancedStatusCode == (reply.contains("5.7.999 ") ? "5.7.999" : nil))
+}
+
+@Test
+func authenticationRedactsBeforeTruncation() {
+    let password = String(repeating: "x", count: 700)
+    let error = SMTPAuthenticationError(mechanism: .plain, stage: .credentialsVerification,
+                                       response: (535, ["535 Invalid credentials " + password]), username: "fake-user", password: password)
+    #expect(error.responseText == "Invalid credentials [redacted]")
+    #expect(!error.description.contains("xxx"))
+}
+
+@Test
+func authenticationFindsEnhancedStatusOnLaterLine() {
+    let error = SMTPAuthenticationError(mechanism: .plain, stage: .credentialsVerification,
+                                       response: (454, ["454-Temporary authentication failure", "454 4.7.0 Please try later"]),
+                                       username: "", password: "")
+    #expect(error.responseCode == 454)
+    #expect(error.enhancedStatusCode == "4.7.0")
+    #expect(error.description.contains("454 (4.7.0)"))
+    #expect(error.responseText.contains("Temporary authentication failure"))
+}
+
 // MARK: - Fake server
 
 /// A local TCP server that answers SMTP lines through a script.
