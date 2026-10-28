@@ -80,13 +80,38 @@ Task {
 }
 ```
 
+## Authentication diagnostics
+
+Unexpected LOGIN and PLAIN replies throw the public `SMTPAuthenticationError` directly from `Client.send`:
+
+```swift
+do {
+    try await client.send(mail)
+} catch let error as SMTPAuthenticationError {
+    print(error.mechanism)          // .login or .plain
+    print(error.stage)              // .initialCommand, .usernameChallenge, .credentialsVerification
+    print(error.responseCode)       // e.g. 535
+    print(error.enhancedStatusCode as Any) // e.g. "5.7.8", or nil
+    print(error.responseText)       // sanitized diagnostic excerpt
+    print(error)                    // same message as error.localizedDescription
+}
+```
+
+For LOGIN, the stages identify the replies to the initial AUTH command, the username, and the password respectively. PLAIN sends credentials in its initial command, so its rejection is reported as `.credentialsVerification`. The first enhanced status code at the start of a response line is preserved separately, including in multiline replies.
+
+Server text is untrusted. Only a conservative vocabulary of authentication diagnostic words is retained; other tokens, identifiers, addresses, commands, and payloads become `[redacted]`. Known usernames, passwords, and their authentication encodings are redacted before truncation. The excerpt is ASCII, flattened to one line, and capped at 512 UTF-8 bytes (including `...` when truncated). Arbitrary provider-specific text is intentionally omitted to avoid leaking unknown tokens. Neither raw replies nor credentials are stored in the error, and no SMTP traffic logging is added.
+
+This is an additive public type: existing method signatures and `Client.Error` cases are unchanged. Authentication status rejections previously threw the internal `Transport.Error.authenticationFailed`; callers now receive `SMTPAuthenticationError`. Existing general error handling continues to work, while code depending on the old internal type through `@testable` must update its matching. Connection failures, timeouts, malformed replies, authentication selection, and TLS requirements retain their existing behavior.
+
 ## Running Tests
 
 This package includes a small test target. Run tests with SwiftPM:
 
 ```bash
-swift test
+swift test --skip 'sendHTML|sendText'
 ```
+
+The two existing `sendHTML` and `sendText` tests contact an external mail server; the command above excludes them. Authentication diagnostic tests use only loopback fake SMTP servers and dummy credentials.
 
 Or run tests from Xcode by opening the package workspace.
 
